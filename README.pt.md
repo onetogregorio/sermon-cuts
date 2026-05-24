@@ -67,13 +67,13 @@ leia um `SKILL.md` e rode scripts.
 ## Início rápido
 
 ```bash
-# 1. Baixa + transcreve + analisa pontos naturais de corte
+# 1. Baixa + transcreve + acha as pausas naturais  (~1 min num sermão de 30min)
 ./scripts/pipeline.sh "https://youtube.com/watch?v=ZKeORvbgWpA"
 
-# 2. (Claude — ou você) lê a transcrição e propõe ~10 cortes.
-#    Você escolhe os que curtir.
+# 2. Claude (ou você) lê a transcrição e propõe ~10 cortes.
+#    Aparece uma lista ranqueada; você escolhe quais renderizar.
 
-# 3. Renderiza os cortes aprovados
+# 3. Renderiza os cortes aprovados  (~30–60s por corte em Apple Silicon)
 ./scripts/pipeline.sh --render-cuts 1,2,4,7 --slug minha_pregacao
 ```
 
@@ -85,7 +85,13 @@ memory/messages/<slug>/renders/02-cut_slug.mp4
 ...
 ```
 
-Prontos pra subir.
+Vertical 1080×1920, legenda brand-style queimada, áudio a -14 LUFS — pronto pra
+subir em Reels, Shorts ou TikTok. Veja [`examples/sample_cuts/`](examples/sample_cuts/)
+pra um output real.
+
+> Setup inicial: ver [INSTALL.md](docs/INSTALL.pt.md) — você precisa do `ffmpeg`,
+> deps Python e um symlink único pros scripts da skill resolverem em
+> `~/.claude/skills/sermon-cuts/`.
 
 ---
 

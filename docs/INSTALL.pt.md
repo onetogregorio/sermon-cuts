@@ -21,14 +21,22 @@ padrão `brew install ffmpeg` já inclui).
 
 ```bash
 sudo apt update
-sudo apt install -y ffmpeg python3 python3-pip yt-dlp \
-                    fonts-dejavu-core  # fallback se Outfit não estiver instalada
-# Instale a Outfit Black:
+sudo apt install -y ffmpeg python3 python3-pip yt-dlp
+
+# Opcional: instalar a Outfit Black (usada na queima de legenda)
 mkdir -p ~/.local/share/fonts
 curl -L https://fonts.google.com/download?family=Outfit > /tmp/outfit.zip
 unzip /tmp/outfit.zip -d ~/.local/share/fonts/
 fc-cache -f -v
 ```
+
+### Fallback de fonte
+
+A Outfit é **opcional**. Se não estiver instalada, o libass cai pra fonte
+sans-serif padrão do sistema (Helvetica Bold no macOS, DejaVu Sans ou similar
+no Linux). Os cortes renderizam normalmente, mas não vão bater com o brand
+style descrito em [STYLE.md](STYLE.md). Instale a Outfit se a identidade
+visual importa pra você.
 
 ## Dependências Python
 

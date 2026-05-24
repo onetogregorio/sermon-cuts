@@ -67,13 +67,13 @@ can read a `SKILL.md` and run shell scripts.
 ## Quick start
 
 ```bash
-# 1. Ingest + transcribe + analyze for cut candidates
+# 1. Ingest + transcribe + find natural cut boundaries  (~1 min for a 30min sermon)
 ./scripts/pipeline.sh "https://youtube.com/watch?v=ZKeORvbgWpA"
 
-# 2. (Claude — or you) reads the transcript and proposes ~10 cuts.
-#    You pick the ones you like.
+# 2. Claude (or you) reads the transcript and proposes ~10 cuts.
+#    A ranked list shows up; you pick which ones to render.
 
-# 3. Render the cuts you approved
+# 3. Render the cuts you approved  (~30–60s per cut on Apple Silicon)
 ./scripts/pipeline.sh --render-cuts 1,2,4,7 --slug my_sermon
 ```
 
@@ -85,7 +85,13 @@ memory/messages/<slug>/renders/02-cut_slug.mp4
 ...
 ```
 
-Ready to upload.
+Vertical 1080×1920, branded subtitles burned in, audio at -14 LUFS — ready to
+upload to Reels, Shorts, or TikTok. See [`examples/sample_cuts/`](examples/sample_cuts/)
+for a real output.
+
+> First-time setup: see [INSTALL.md](docs/INSTALL.md) — you need `ffmpeg`,
+> Python deps, and a one-time symlink so the skill scripts resolve from
+> `~/.claude/skills/sermon-cuts/`.
 
 ---
 

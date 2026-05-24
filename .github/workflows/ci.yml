@@ -1,0 +1,54 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile-check all Python scripts
+        run: python -m compileall -q scripts/
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Validate YAML configs
+        run: yamllint -d relaxed config/ .github/
+
+      - name: Validate render_defaults.yaml schema
+        run: |
+          python - <<'PY'
+          import yaml, sys
+          cfg = yaml.safe_load(open("config/render_defaults.yaml"))
+          required_top = {"output", "video", "audio", "tracking", "subtitle", "cut_validation"}
+          missing = required_top - set(cfg)
+          if missing:
+              sys.exit(f"render_defaults.yaml missing top-level keys: {missing}")
+          for k in ("width", "height", "fps"):
+              assert k in cfg["output"], f"output.{k} missing"
+          print("render_defaults.yaml schema OK")
+          PY
+
+      - name: Validate force_style.txt parses
+        run: |
+          python - <<'PY'
+          txt = open("config/force_style.txt").read().strip()
+          pairs = [p.strip() for p in txt.split(",") if p.strip()]
+          required = {"FontName", "FontSize", "PrimaryColour", "OutlineColour",
+                      "Alignment", "MarginV"}
+          keys = {p.split("=")[0] for p in pairs}
+          missing = required - keys
+          if missing:
+              raise SystemExit(f"force_style.txt missing keys: {missing}")
+          print("force_style.txt OK")
+          PY
