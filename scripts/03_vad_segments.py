@@ -23,10 +23,13 @@ import argparse, json, subprocess, sys, tempfile
 from pathlib import Path
 import yaml
 
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import resolve_ffmpeg
+
 SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
 MESSAGES = SKILL_ROOT / "memory/messages"
 CFG = yaml.safe_load((SKILL_ROOT / "config/render_defaults.yaml").read_text())
-FFMPEG = CFG.get("ffmpeg_bin") or "ffmpeg"
+FFMPEG = resolve_ffmpeg(CFG.get("ffmpeg_bin"))
 
 
 def extract_wav_16k(src: Path, out: Path) -> None:
