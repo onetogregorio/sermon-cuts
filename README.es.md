@@ -262,6 +262,16 @@ Construido con [Claude Code](https://claude.com/claude-code).
 
 ---
 
+## Documentación rápida
+
+- **[FAQ](docs/FAQ.es.md)** — respuestas para pastor: costo, idiomas, privacidad, qué funciona
+- **[Privacidad](docs/PRIVACY.es.md)** — qué datos salen de tu máquina (spoiler: por defecto, casi nada)
+- **[Troubleshooting](docs/TROUBLESHOOTING.es.md)** — errores comunes con solución
+- **[Instalación](docs/INSTALL.es.md)** — deps de sistema + verificar
+- **[Pipeline](docs/PIPELINE.es.md)** — qué hace cada script, paso a paso
+
+---
+
 ## Licencia
 
 MIT — vea [`LICENSE`](LICENSE). Úsalo libremente. Corta más mensajes. Alcanza más gente.

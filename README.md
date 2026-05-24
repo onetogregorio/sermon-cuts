@@ -258,6 +258,16 @@ Built with [Claude Code](https://claude.com/claude-code).
 
 ---
 
+## Docs at a glance
+
+- **[FAQ](docs/FAQ.md)** — pastor-friendly answers: cost, languages, privacy, what works
+- **[Privacy](docs/PRIVACY.md)** — what data leaves your machine (spoiler: by default, almost nothing)
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** — common errors with fixes
+- **[Install](docs/INSTALL.md)** — system deps + verify
+- **[Pipeline](docs/PIPELINE.md)** — what each script does, step by step
+
+---
+
 ## License
 
 MIT — see [`LICENSE`](LICENSE). Use it freely. Cut more messages. Reach more people.
