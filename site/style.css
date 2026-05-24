@@ -360,10 +360,12 @@ section h2 {
   opacity: 1;
 }
 
-.editor-card svg {
+.editor-card svg,
+.editor-card img {
   width: 36px;
   height: 36px;
   display: block;
+  object-fit: contain;
 }
 
 .editor-card span {
