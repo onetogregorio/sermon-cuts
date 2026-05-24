@@ -140,6 +140,86 @@ Generates a brand-styled SRT from the transcript words in the cut's range:
 
 Writes `memory/messages/<slug>/srts/NN-slug.srt`.
 
+## 06b_scrub_srt.py
+
+```bash
+./scripts/06b_scrub_srt.py <slug> <cut_index> [--auto-apply]
+                                              [--dry-run]
+                                              [--use-llm]
+                                              [--corrections PATH]
+```
+
+Optional lint pass that runs **between `06_build_srt` and `07_render_track`**,
+scanning the SRT for the YouTube-auto-caption error patterns we see most
+often (dropped sentence boundaries, hesitation duplications, theological
+term misspellings). Lets you fix transcription errors before burn-in
+instead of after — saves a full re-encode per typo.
+
+### What it looks for
+
+1. **`dropped_word_boundary`** — a function word (em / que / de / etc.)
+   immediately before a capitalized non-proper-noun. YouTube ate a word
+   at a sentence boundary.
+       `"do que Mas não"`  ←  was actually  `"do que nós. Mas não"`
+   Whitelists common Bible characters/places and Portuguese pronouns so
+   `"em Cristo"` and `"para Ele"` don't false-positive.
+
+2. **`immediate_repetition`** — `\b(\w+)\s+\1\b` filtered to known
+   hesitations (a, o, um, uma, que, eu, ele, ela, …) and short words.
+   Skips stylistic repetition separated by commas like `"cansa, cansa"`.
+
+3. **`forbidden_ending`** — re-checks the
+   `cut_validation.forbid_endings` list per cue (not just at the cut
+   boundary like `05_validate_cut.py` does). Reports only; the fix
+   usually means shifting the trailing word into the next cue, which
+   the human should do.
+
+4. **`dictionary`** — if `memory/messages/<slug>/corrections.txt`
+   exists, applies `wrong=right` pairs automatically (one per line,
+   `#` for comments). Useful for recurring fixes:
+   ```
+   Quisto=Cristo
+   Espirito=Espírito
+   ```
+
+5. **`--use-llm`** (opt-in, requires `GROQ_API_KEY` or
+   `ANTHROPIC_API_KEY`) — stubbed for now; the CLI surface is in place
+   but the API call is left for a follow-up commit.
+
+### Modes
+
+| Flag | Behavior |
+|---|---|
+| (none, TTY)   | interactive review — prompts `y/n/edit/skip` per suspect |
+| `--auto-apply` | applies dictionary + confidence ≥ 0.85 silently |
+| `--dry-run`    | only reports, never writes the SRT |
+| (none, non-TTY)| treated as `--dry-run` so scripted environments don't mutate silently |
+
+`pipeline.sh` integrates this step automatically (interactive on TTY,
+`--auto-apply` in batch). Skip with `--skip-scrub`:
+
+```bash
+./scripts/pipeline.sh --render-cuts 1,2 --slug my_msg --skip-scrub
+```
+
+Writes back to `memory/messages/<slug>/srts/NN-slug.srt` in place. JSON
+report goes to stdout:
+
+```json
+{
+  "ok": true,
+  "srt": "...",
+  "suspects": [
+    {"cue": 27, "tc": "00:00:36,080", "text": "do que Mas não",
+     "pattern": "dropped_word_boundary",
+     "suggestion": "do que. Mas não",
+     "confidence": 0.75, "applied": false}
+  ],
+  "applied_count": 0,
+  "dry_run": false
+}
+```
+
 ## 07_render_track.py
 
 ```bash

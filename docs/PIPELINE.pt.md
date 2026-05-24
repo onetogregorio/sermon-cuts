@@ -140,6 +140,84 @@ Gera um SRT brand-styled a partir das palavras da transcrição no range do cort
 
 Grava `memory/messages/<slug>/srts/NN-slug.srt`.
 
+## 06b_scrub_srt.py
+
+```bash
+./scripts/06b_scrub_srt.py <slug> <cut_index> [--auto-apply]
+                                              [--dry-run]
+                                              [--use-llm]
+                                              [--corrections PATH]
+```
+
+Passo opcional de lint que roda **entre `06_build_srt` e `07_render_track`**,
+escaneando o SRT em busca dos padrões de erro mais comuns das auto-captions
+do YouTube (fronteiras de frase com palavra dropada, hesitações duplicadas,
+termos teológicos grafados errado). Permite consertar erros de transcrição
+antes do burn-in — economiza um re-encode inteiro por typo.
+
+### O que ele procura
+
+1. **`dropped_word_boundary`** — palavra-função (em / que / de / etc.)
+   logo antes de uma palavra capitalizada que não é nome próprio. O
+   YouTube engoliu uma palavra numa fronteira de frase.
+       `"do que Mas não"`  ←  era na real  `"do que nós. Mas não"`
+   Tem whitelist de personagens/lugares bíblicos comuns e pronomes em
+   português pra `"em Cristo"` e `"para Ele"` não dispararem falso positivo.
+
+2. **`immediate_repetition`** — `\b(\w+)\s+\1\b` filtrado pra hesitações
+   conhecidas (a, o, um, uma, que, eu, ele, ela, …) e palavras curtas.
+   Pula repetição estilística separada por vírgula tipo `"cansa, cansa"`.
+
+3. **`forbidden_ending`** — re-checa a lista `cut_validation.forbid_endings`
+   por legenda (não só na fronteira do corte como o `05_validate_cut.py`).
+   Só reporta; o fix geralmente é mover a palavra final pra próxima
+   legenda, melhor feito manualmente.
+
+4. **`dictionary`** — se `memory/messages/<slug>/corrections.txt` existir,
+   aplica pares `errado=correto` automaticamente (um por linha, `#` pra
+   comentário). Útil pra fixes recorrentes:
+   ```
+   Quisto=Cristo
+   Espirito=Espírito
+   ```
+
+5. **`--use-llm`** (opt-in, requer `GROQ_API_KEY` ou `ANTHROPIC_API_KEY`)
+   — stub por ora; a interface CLI está pronta mas a chamada à API fica
+   pra um commit futuro.
+
+### Modos
+
+| Flag | Comportamento |
+|---|---|
+| (nenhuma, TTY)  | review interativo — prompt `y/n/edit/skip` por suspeito |
+| `--auto-apply`  | aplica dict + confiança ≥ 0.85 sem perguntar |
+| `--dry-run`     | só reporta, nunca escreve o SRT |
+| (nenhuma, sem TTY) | tratado como `--dry-run` pra ambientes scripted não mutarem silencioso |
+
+O `pipeline.sh` integra esse passo automaticamente (interativo em TTY,
+`--auto-apply` em batch). Pula com `--skip-scrub`:
+
+```bash
+./scripts/pipeline.sh --render-cuts 1,2 --slug minha_msg --skip-scrub
+```
+
+Escreve em `memory/messages/<slug>/srts/NN-slug.srt` in-place. JSON em stdout:
+
+```json
+{
+  "ok": true,
+  "srt": "...",
+  "suspects": [
+    {"cue": 27, "tc": "00:00:36,080", "text": "do que Mas não",
+     "pattern": "dropped_word_boundary",
+     "suggestion": "do que. Mas não",
+     "confidence": 0.75, "applied": false}
+  ],
+  "applied_count": 0,
+  "dry_run": false
+}
+```
+
 ## 07_render_track.py
 
 ```bash
