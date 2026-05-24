@@ -1,18 +1,30 @@
 /* ───────────────────────────────────────────────────────────────────
    Sermon Cuts — landing styles
-   Palette: navy #192a56 · gold #fbc531 · pure black #000
+   Palette (editorial cream theme):
+     navy   #192a56  · primary brand, headlines, body emphasis
+     gold   #fbc531  · accent, CTAs, key highlights
+     cream  #f3eddc  · page surface (background)
+     ink    #2f3640  · body text, secondary headings
+     paper  #ffffff  · raised surfaces (cards, code blocks)
+     temperament accents: terracota #b1462f, gold queimado #d29622,
+       indigo profundo (= navy), sage #6b7a4a
    ─────────────────────────────────────────────────────────────────── */
 
 :root {
   --navy: #192a56;
   --navy-deep: #0f1c3d;
   --gold: #fbc531;
-  --gold-soft: #fad26b;
-  --ink: #0a0d14;
+  --gold-burnt: #d29622;
+  --terracota: #b1462f;
+  --sage: #6b7a4a;
+  --cream: #f3eddc;
+  --cream-warm: #ebe3cf;
+  --cream-soft: #f8f3e4;
   --paper: #ffffff;
-  --paper-dim: #f3f1ea;
+  --ink: #2f3640;
+  --ink-soft: #4a5260;
   --muted: #8a8478;
-  --hair: rgba(255, 255, 255, 0.08);
+  --hair: rgba(25, 42, 86, 0.10);
   --max: 1180px;
 }
 
@@ -28,28 +40,32 @@ body {
   margin: 0;
   font-family: 'Outfit', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
   font-weight: 400;
-  color: var(--paper);
-  background: var(--ink);
+  color: var(--ink);
+  background: var(--cream);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 a {
-  color: var(--gold);
-  text-decoration: none;
-  transition: opacity 0.15s ease;
+  color: var(--navy);
+  text-decoration: underline;
+  text-decoration-color: rgba(25, 42, 86, 0.3);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: opacity 0.15s ease, text-decoration-color 0.15s ease;
 }
 
 a:hover {
   opacity: 0.78;
+  text-decoration-color: var(--gold);
 }
 
 code {
   font-family: 'SF Mono', ui-monospace, 'Cascadia Code', Menlo, monospace;
   font-size: 0.92em;
-  background: rgba(251, 197, 49, 0.12);
-  color: var(--gold-soft);
+  background: rgba(25, 42, 86, 0.06);
+  color: var(--navy-deep);
   padding: 0.05em 0.35em;
   border-radius: 4px;
 }
@@ -70,7 +86,7 @@ code {
   justify-content: space-between;
   gap: 16px;
   padding: 14px 32px;
-  background: rgba(10, 13, 20, 0.85);
+  background: rgba(243, 237, 220, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--hair);
@@ -80,10 +96,11 @@ code {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--paper);
+  color: var(--navy);
   font-weight: 800;
   font-size: 1.05rem;
   letter-spacing: -0.01em;
+  text-decoration: none;
 }
 
 .logo-mark {
@@ -96,15 +113,16 @@ code {
   display: flex;
   gap: 22px;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .nav a {
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--ink-soft);
+  text-decoration: none;
 }
 
 .nav a:hover {
-  color: var(--gold);
+  color: var(--navy);
   opacity: 1;
 }
 
@@ -123,6 +141,7 @@ code {
   border-radius: 999px;
   padding: 0;
   opacity: 0.55;
+  text-decoration: none;
   transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -133,7 +152,7 @@ code {
 
 .lang-switch a.active {
   opacity: 1;
-  box-shadow: 0 0 0 2px var(--gold), 0 0 0 4px rgba(251, 197, 49, 0.18);
+  box-shadow: 0 0 0 2px var(--navy), 0 0 0 4px rgba(25, 42, 86, 0.18);
 }
 
 .lang-switch img {
@@ -162,9 +181,9 @@ code {
 .hero {
   padding: 90px 24px 64px;
   background:
-    radial-gradient(ellipse at 78% 12%, rgba(25, 42, 86, 0.55), transparent 55%),
-    radial-gradient(ellipse at 12% 90%, rgba(251, 197, 49, 0.08), transparent 50%),
-    var(--ink);
+    radial-gradient(ellipse at 78% 12%, rgba(25, 42, 86, 0.10), transparent 55%),
+    radial-gradient(ellipse at 12% 90%, rgba(251, 197, 49, 0.18), transparent 55%),
+    var(--cream);
   border-bottom: 1px solid var(--hair);
 }
 
@@ -184,10 +203,11 @@ code {
   line-height: 1.04;
   letter-spacing: -0.025em;
   margin: 18px 0 22px;
+  color: var(--navy);
 }
 
 .gold {
-  color: var(--gold);
+  color: var(--gold-burnt);
 }
 
 .kicker {
@@ -195,13 +215,13 @@ code {
   letter-spacing: 0.16em;
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--muted);
+  color: var(--terracota);
   margin: 0;
 }
 
 .lede {
   font-size: 1.12rem;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--ink-soft);
   margin: 0 0 30px;
   max-width: 52ch;
 }
@@ -220,29 +240,32 @@ code {
   font-weight: 800;
   font-size: 1rem;
   letter-spacing: -0.005em;
+  text-decoration: none;
   transition: transform 0.12s ease, box-shadow 0.18s ease, background 0.15s ease;
 }
 
 .btn-primary {
-  background: var(--gold);
-  color: var(--ink);
-  box-shadow: 0 10px 28px -8px rgba(251, 197, 49, 0.55);
+  background: var(--navy);
+  color: var(--cream);
+  box-shadow: 0 10px 28px -8px rgba(25, 42, 86, 0.45);
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
   opacity: 1;
-  box-shadow: 0 14px 36px -10px rgba(251, 197, 49, 0.7);
+  background: var(--navy-deep);
+  box-shadow: 0 14px 36px -10px rgba(25, 42, 86, 0.55);
 }
 
 .btn-ghost {
-  color: var(--paper);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--navy);
+  border: 1.5px solid rgba(25, 42, 86, 0.28);
+  background: transparent;
 }
 
 .btn-ghost:hover {
-  border-color: rgba(251, 197, 49, 0.5);
-  color: var(--gold);
+  border-color: var(--navy);
+  background: rgba(25, 42, 86, 0.04);
   opacity: 1;
 }
 
@@ -267,11 +290,11 @@ code {
   aspect-ratio: 9 / 16;
   background: var(--navy-deep);
   border-radius: 32px;
-  border: 6px solid #1a1f2e;
+  border: 6px solid var(--ink);
   padding: 4px;
   box-shadow:
-    0 30px 70px -20px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(251, 197, 49, 0.08);
+    0 30px 70px -20px rgba(25, 42, 86, 0.35),
+    0 0 0 1px rgba(25, 42, 86, 0.08);
   overflow: hidden;
   position: relative;
 }
@@ -286,7 +309,7 @@ code {
 
 .demo-caption {
   font-size: 0.85rem;
-  color: var(--muted);
+  color: var(--ink-soft);
   text-align: center;
   max-width: 30ch;
   margin: 0;
@@ -317,18 +340,19 @@ section h2 {
   letter-spacing: -0.022em;
   line-height: 1.1;
   margin: 14px 0 18px;
+  color: var(--navy);
 }
 
 .section-lede {
   font-size: 1.05rem;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--ink-soft);
   max-width: 54ch;
   margin: 0 0 36px;
 }
 
 /* ─── editors compatibility section ───────────────────────── */
 .editors-section {
-  background: linear-gradient(180deg, var(--ink) 0%, #0c1020 100%);
+  background: var(--cream-soft);
 }
 
 .editors-grid {
@@ -345,18 +369,19 @@ section h2 {
   justify-content: center;
   gap: 10px;
   padding: 18px 12px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--paper);
+  border: 1px solid var(--hair);
   border-radius: 14px;
-  color: var(--paper);
+  color: var(--ink);
   text-align: center;
-  transition: border-color 0.2s ease, transform 0.18s ease, background 0.18s ease;
+  text-decoration: none;
+  transition: border-color 0.2s ease, transform 0.18s ease, box-shadow 0.2s ease;
 }
 
 .editor-card:hover {
-  border-color: rgba(251, 197, 49, 0.45);
-  background: rgba(251, 197, 49, 0.05);
+  border-color: rgba(25, 42, 86, 0.4);
   transform: translateY(-2px);
+  box-shadow: 0 10px 28px -16px rgba(25, 42, 86, 0.35);
   opacity: 1;
 }
 
@@ -372,7 +397,7 @@ section h2 {
   font-size: 0.86rem;
   font-weight: 700;
   letter-spacing: -0.005em;
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--navy);
 }
 
 @media (max-width: 900px) {
@@ -389,19 +414,19 @@ section h2 {
 
 /* ─── install section ──────────────────────────────────────── */
 .install {
-  background: linear-gradient(180deg, var(--ink) 0%, #0b1024 100%);
+  background: var(--cream);
 }
 
 .code-card {
   position: relative;
-  background: #ffffff;
-  border: 1px solid rgba(251, 197, 49, 0.32);
+  background: var(--paper);
+  border: 1px solid rgba(25, 42, 86, 0.18);
   border-radius: 18px;
   padding: 28px 28px 22px;
   margin-top: 18px;
   box-shadow:
-    0 24px 60px -22px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(251, 197, 49, 0.06);
+    0 18px 50px -22px rgba(25, 42, 86, 0.25),
+    0 0 0 1px rgba(25, 42, 86, 0.04);
 }
 
 .code-card pre {
@@ -409,23 +434,22 @@ section h2 {
   font-family: 'SF Mono', ui-monospace, 'Cascadia Code', Menlo, monospace;
   font-size: 0.88rem;
   line-height: 1.7;
-  color: #1a1f2e;
+  color: var(--ink);
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-/* Inline links inside the prompt (URLs) stay readable on white. */
 .code-card pre a {
-  color: #5b3a05;
+  color: var(--terracota);
 }
 
 .copy-btn {
   position: absolute;
   top: 14px;
   right: 14px;
-  background: var(--ink);
-  color: var(--gold);
-  border: 1px solid var(--ink);
+  background: var(--navy);
+  color: var(--cream);
+  border: 1px solid var(--navy);
   padding: 7px 16px;
   font-family: 'Outfit', sans-serif;
   font-weight: 800;
@@ -437,18 +461,18 @@ section h2 {
 }
 
 .copy-btn:hover {
-  background: #1a2138;
+  background: var(--navy-deep);
   transform: translateY(-1px);
 }
 
 .after-prompt {
   text-align: center;
   margin-top: 28px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--ink-soft);
 }
 
 .after-prompt em {
-  color: var(--gold);
+  color: var(--terracota);
   font-style: normal;
   font-weight: 700;
 }
@@ -461,10 +485,11 @@ section h2 {
 }
 
 .install-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--paper);
+  border: 1px solid var(--hair);
   border-radius: 18px;
   padding: 22px 24px 26px;
+  box-shadow: 0 4px 14px -8px rgba(25, 42, 86, 0.12);
 }
 
 .install-card-head {
@@ -486,17 +511,21 @@ section h2 {
   font-size: 1.1rem;
   font-weight: 800;
   letter-spacing: -0.01em;
+  color: var(--navy);
 }
 
 .install-card-head p {
   margin: 0;
   font-size: 0.92rem;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--ink-soft);
 }
 
 .install-card .code-card {
   margin-top: 0;
   padding: 18px 22px;
+  background: var(--cream-soft);
+  box-shadow: none;
+  border: 1px solid var(--hair);
 }
 
 .install-card .code-card pre {
@@ -504,13 +533,12 @@ section h2 {
   line-height: 1.6;
 }
 
-/* Day-to-day commands cheat-sheet under the install paths. */
 .commands-title {
   margin: 48px 0 18px;
   text-align: center;
   font-size: 1.1rem;
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--navy);
   letter-spacing: -0.01em;
 }
 
@@ -521,8 +549,8 @@ section h2 {
 }
 
 .commands-grid > div {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--paper);
+  border: 1px solid var(--hair);
   border-radius: 12px;
   padding: 16px 14px;
   text-align: center;
@@ -535,12 +563,15 @@ section h2 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  background: transparent;
+  color: var(--navy);
+  padding: 0;
 }
 
 .commands-grid p {
   margin: 0;
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--ink-soft);
 }
 
 @media (max-width: 760px) {
@@ -550,6 +581,10 @@ section h2 {
 }
 
 /* ─── features grid ────────────────────────────────────────── */
+.features {
+  background: var(--cream-soft);
+}
+
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -558,24 +593,25 @@ section h2 {
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--paper);
+  border: 1px solid var(--hair);
   border-radius: 16px;
   padding: 26px 24px;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card:hover {
-  border-color: rgba(251, 197, 49, 0.25);
+  border-color: rgba(25, 42, 86, 0.32);
   transform: translateY(-2px);
+  box-shadow: 0 14px 36px -22px rgba(25, 42, 86, 0.3);
 }
 
 .card .icon {
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: rgba(251, 197, 49, 0.12);
-  color: var(--gold);
+  background: rgba(251, 197, 49, 0.22);
+  color: var(--gold-burnt);
   font-weight: 900;
   font-size: 1.05rem;
   display: grid;
@@ -588,11 +624,12 @@ section h2 {
   font-size: 1.08rem;
   margin: 0 0 8px;
   letter-spacing: -0.01em;
+  color: var(--navy);
 }
 
 .card p {
   font-size: 0.94rem;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--ink-soft);
   margin: 0;
   line-height: 1.55;
 }
@@ -611,7 +648,7 @@ section h2 {
 
 /* ─── how-it-works steps ───────────────────────────────────── */
 .how {
-  background: linear-gradient(180deg, #0b1024 0%, var(--ink) 100%);
+  background: var(--cream);
 }
 
 .steps {
@@ -627,8 +664,8 @@ section h2 {
   grid-template-columns: 60px 1fr;
   gap: 22px;
   padding: 22px 24px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--paper);
+  border: 1px solid var(--hair);
   border-radius: 14px;
   align-items: start;
 }
@@ -637,7 +674,7 @@ section h2 {
   font-family: 'Outfit', sans-serif;
   font-weight: 900;
   font-size: 2.2rem;
-  color: var(--gold);
+  color: var(--gold-burnt);
   line-height: 1;
 }
 
@@ -645,17 +682,19 @@ section h2 {
   margin: 0 0 4px;
   font-weight: 800;
   font-size: 1.1rem;
+  color: var(--navy);
 }
 
 .steps p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--ink-soft);
   font-size: 0.95rem;
 }
 
 /* ─── sponsors ─────────────────────────────────────────────── */
 .sponsors {
   text-align: center;
+  background: var(--cream-soft);
 }
 
 .sponsors .section-lede {
@@ -671,7 +710,6 @@ section h2 {
   margin: 0 auto 30px;
 }
 
-/* Single-sponsor layout: center one card without stretching it full-width. */
 .sponsor-grid--solo {
   grid-template-columns: minmax(0, 420px);
   justify-content: center;
@@ -682,17 +720,18 @@ section h2 {
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(251, 197, 49, 0.22);
+  background: var(--paper);
+  border: 1px solid rgba(25, 42, 86, 0.18);
   border-radius: 16px;
   padding: 32px 24px;
-  color: var(--paper);
-  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.2s ease;
 }
 
 .sponsor-card:hover {
-  border-color: rgba(251, 197, 49, 0.55);
-  background: rgba(251, 197, 49, 0.04);
+  border-color: rgba(25, 42, 86, 0.42);
+  box-shadow: 0 14px 36px -22px rgba(25, 42, 86, 0.3);
   transform: translateY(-2px);
   opacity: 1;
 }
@@ -709,26 +748,31 @@ section h2 {
   border-radius: 14px;
   background: var(--paper);
   padding: 18px 22px;
-  box-shadow: 0 8px 22px -8px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 0 1px var(--hair);
 }
 
-/* When the sponsor card uses the wide brand mark, the logo already
-   contains the name — hide the duplicate text label. */
 .sponsor-card .sponsor-logo-img + .sponsor-name {
   display: none;
+}
+
+.sponsor-name {
+  font-weight: 900;
+  font-size: 1.35rem;
+  letter-spacing: -0.015em;
+  color: var(--navy);
 }
 
 .sponsor-logo {
   font-weight: 900;
   font-size: 1.6rem;
   letter-spacing: -0.015em;
-  color: var(--gold);
+  color: var(--navy);
   margin-bottom: 8px;
 }
 
 .sponsor-card p {
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--ink-soft);
   margin: 0;
   text-align: center;
   max-width: 36ch;
@@ -741,7 +785,7 @@ section h2 {
 
 .sponsor-cta {
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--ink-soft);
 }
 
 @media (max-width: 600px) {
@@ -751,6 +795,10 @@ section h2 {
 }
 
 /* ─── about ────────────────────────────────────────────────── */
+.about {
+  background: var(--cream);
+}
+
 .about-grid {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
@@ -759,7 +807,7 @@ section h2 {
 }
 
 .about p {
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--ink);
   font-size: 1.02rem;
   max-width: 56ch;
 }
@@ -786,7 +834,7 @@ section h2 {
   letter-spacing: 0.14em;
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--muted);
+  color: var(--terracota);
 }
 
 @media (max-width: 720px) {
@@ -799,9 +847,10 @@ section h2 {
 /* ─── footer ───────────────────────────────────────────────── */
 .site-footer {
   padding: 28px 0;
-  background: var(--ink);
+  background: var(--cream-warm);
   font-size: 0.88rem;
-  color: var(--muted);
+  color: var(--ink-soft);
+  border-top: 1px solid var(--hair);
 }
 
 .footer-grid {
@@ -821,7 +870,8 @@ section h2 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--muted);
+  color: var(--ink-soft);
+  text-decoration: none;
 }
 
 .lang-foot a img {
@@ -832,7 +882,8 @@ section h2 {
 }
 
 .lang-foot a.active {
-  color: var(--gold);
+  color: var(--navy);
+  font-weight: 700;
 }
 
 .site-footer p {
