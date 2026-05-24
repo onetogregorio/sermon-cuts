@@ -143,13 +143,14 @@ Grava `memory/messages/<slug>/srts/NN-slug.srt`.
 ## 06b_scrub_srt.py
 
 ```bash
-./scripts/06b_scrub_srt.py <slug> <cut_index> [--auto-apply]
-                                              [--dry-run]
+./scripts/06b_scrub_srt.py <slug> <cut_index> [--agent-review]
                                               [--use-llm]
+                                              [--auto-apply]
+                                              [--dry-run]
                                               [--corrections PATH]
 ```
 
-Passo opcional de lint que roda **entre `06_build_srt` e `07_render_track`**,
+Passo de lint que roda **entre `06_build_srt` e `07_render_track``,
 escaneando o SRT em busca dos padrões de erro mais comuns das auto-captions
 do YouTube (fronteiras de frase com palavra dropada, hesitações duplicadas,
 termos teológicos grafados errado). Permite consertar erros de transcrição
@@ -181,21 +182,24 @@ antes do burn-in — economiza um re-encode inteiro por typo.
    Espirito=Espírito
    ```
 
-5. **`--use-llm`** (opt-in, requer `GROQ_API_KEY` ou `ANTHROPIC_API_KEY`)
-   — stub por ora; a interface CLI está pronta mas a chamada à API fica
-   pra um commit futuro.
+### Três caminhos de review
 
-### Modos
+| Caminho | Quando usar |
+|---|---|
+| **`--agent-review`** (default em non-TTY com suspeitos) | O orquestrador (Claude Code / Cursor / …) está lendo stdout. 06b emite JSON estruturado com texto da cue prev/next, snippet word-level do transcript ao redor de cada suspeito, e o path pro `prompts/scrub_srt.md`. O agente lê o prompt, decide fixes, aplica via Edit tool, e retoma o pipeline com `--skip-scrub`. |
+| **`--use-llm`** | Runs standalone (cron, nightly, sem agente atrelado). Chama Anthropic Claude (prefere `ANTHROPIC_API_KEY`) ou Groq Llama (`GROQ_API_KEY` fallback). O mesmo `prompts/scrub_srt.md` vira system prompt; o LLM retorna `{fixes: [{cue, new_text, reason}]}` que aplicamos no SRT. |
+| **`--auto-apply`** | Só regras, confiança ≥ 0.85. Na prática só colapsa hesitações silenciosamente. Modo mais barato. |
+
+### Outros modos
 
 | Flag | Comportamento |
 |---|---|
 | (nenhuma, TTY)  | review interativo — prompt `y/n/edit/skip` por suspeito |
-| `--auto-apply`  | aplica dict + confiança ≥ 0.85 sem perguntar |
 | `--dry-run`     | só reporta, nunca escreve o SRT |
-| (nenhuma, sem TTY) | tratado como `--dry-run` pra ambientes scripted não mutarem silencioso |
 
 O `pipeline.sh` integra esse passo automaticamente (interativo em TTY,
-`--auto-apply` em batch). Pula com `--skip-scrub`:
+JSON `--agent-review` em non-TTY pra o agente orquestrador agir). Pula
+com `--skip-scrub`:
 
 ```bash
 ./scripts/pipeline.sh --render-cuts 1,2 --slug minha_msg --skip-scrub
