@@ -24,6 +24,7 @@
       <a href="#editors">Editors</a>
       <a href="#install">Install</a>
       <a href="#features">Features</a>
+      <a href="#docs">Docs</a>
       <a href="#sponsors">Sponsors</a>
     </nav>
     <div class="lang-switch">
@@ -60,8 +61,14 @@
         </div>
         <div class="hero-demo">
           <div class="phone-frame">
-            <video autoplay muted loop playsinline preload="metadata" poster="">
+            <video autoplay muted loop playsinline preload="metadata" poster=""
+                   aria-label="Demo of a vertical 1080×1920 sermon clip produced by the Sermon Cuts pipeline, with gold subtitles burned in over a preacher on stage.">
               <source src="./assets/demo.mp4" type="video/mp4" />
+              <p>Your browser doesn't support inline video. The demo is a
+              37-second vertical clip of a sermon, with gold subtitles
+              burned in over a preacher on stage — see
+              <a href="https://github.com/onetogregorio/sermon-cuts/tree/main/examples/sample_cuts">examples/sample_cuts/</a>
+              for the actual MP4.</p>
             </video>
           </div>
           <p class="demo-caption">
@@ -289,6 +296,35 @@ Report success or the failed step at the end.</pre>
             </div>
           </li>
         </ol>
+      </div>
+    </section>
+
+    <section id="docs" class="features">
+      <div class="container">
+        <p class="kicker">Docs for everyone</p>
+        <h2>Whether you preach or you build — <span class="gold">there's a doc for you</span>.</h2>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <h3>For pastors</h3>
+            <ul>
+              <li><a href="https://github.com/onetogregorio/sermon-cuts/blob/main/docs/FAQ.md">FAQ</a> — cost, languages, what works</li>
+              <li><a href="https://github.com/onetogregorio/sermon-cuts/blob/main/docs/USE_CASES.md">Use cases</a> — Sunday sermon, series, conference</li>
+              <li><a href="https://github.com/onetogregorio/sermon-cuts/blob/main/docs/PRIVACY.md">Privacy</a> — where your audio goes (spoiler: by default, nowhere)</li>
+              <li><a href="https://github.com/onetogregorio/sermon-cuts/blob/main/docs/TROUBLESHOOTING.md">Troubleshooting</a> — common errors with fixes</li>
+              <li><a href="https://github.com/onetogregorio/sermon-cuts/blob/main/docs/GLOSSARY.md">Glossary</a> — every term defined plainly</li>
+            </ul>
+          </div>
+          <div class="feature-card">
+            <h3>For installers &amp; devs</h3>
+            <ul>
+              <li><a href="https://github.com/onetogregorio/sermon-cuts/blob/main/docs/INSTALL.md">Install</a> — system deps + verification</li>
+              <li><a href="https://github.com/onetogregorio/sermon-cuts/blob/main/docs/PIPELINE.md">Pipeline</a> — what each script does</li>
+              <li><a href="https://github.com/onetogregorio/sermon-cuts/blob/main/docs/STYLE.md">Style</a> — subtitle font/color/branding</li>
+              <li><a href="https://github.com/onetogregorio/sermon-cuts/blob/main/docs/TRANSCRIPTION_NOTES.md">Transcription notes</a> — YouTube vs Groq tradeoffs</li>
+              <li><a href="https://github.com/onetogregorio/sermon-cuts/blob/main/docs/PERFORMANCE.md">Performance</a> — render benchmarks</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </section>
 
