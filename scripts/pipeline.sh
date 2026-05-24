@@ -76,6 +76,8 @@ case "$MODE" in
       $PY "$SCRIPTS/07_render_track.py" "$SLUG" "$IDX"
       echo "→ cut #$IDX: normalize audio"
       $PY "$SCRIPTS/08_audio_normalize.py" "$SLUG" "$IDX" --in-place
+      echo "→ cut #$IDX: trim long silences (opt-in)"
+      $PY "$SCRIPTS/09_trim_silences.py" "$SLUG" "$IDX" --in-place
     done
     ;;
 
@@ -87,6 +89,7 @@ case "$MODE" in
       $PY "$SCRIPTS/06_build_srt.py" "$SLUG" "$IDX"
       $PY "$SCRIPTS/07_render_track.py" "$SLUG" "$IDX"
       $PY "$SCRIPTS/08_audio_normalize.py" "$SLUG" "$IDX" --in-place
+      $PY "$SCRIPTS/09_trim_silences.py" "$SLUG" "$IDX" --in-place
     done
     ;;
 esac

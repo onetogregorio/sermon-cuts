@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 """Build a brand-styled SRT for a cut segment.
 
-Chunking rules (from CLAUDE.md / video_brand_style.md):
+Chunking rules (from docs/STYLE.md):
 - 3-4 words per cue, max ~20 chars
 - Function-word-aware breaks (don't end a cue on "para", "que", "com"…)
+- Prefer to break BEFORE a coordinating conjunction ("e", "mas", "ou",
+  "porque") so the new clause starts a new cue — semantic break wins over
+  word-count break.
+- Hard break on .!?; soft break on ,;: once min_words reached
 - Sentence case (capitalize first cue if Whisper starts lowercase)
 - ≥0.5s pause forces a flush
 - Strip trailing soft punctuation (,;:) from cue text
+- First cue gets a hook boost ({\\fs22\\b1}) so the opening line pops on
+  vertical platforms; pass --no-hook-boost to disable.
 
 Usage:
-    06_build_srt.py <slug> <cut_index>
+    06_build_srt.py <slug> <cut_index> [--no-hook-boost]
 
 Reads:
     memory/messages/<slug>/transcript.json
@@ -41,6 +47,15 @@ FUNC = set(
     if line.strip() and not line.startswith("#")
     for w in line.split()
 )
+# Coordinating conjunctions: we prefer to flush BEFORE these so the next
+# clause starts a fresh cue. Subset of FUNC, but with stronger semantics —
+# crossing one is almost always a phrase boundary in spoken Portuguese.
+CONJ_BREAK = {"e", "mas", "ou", "porém", "porque", "pois", "então", "logo"}
+
+HOOK_PREFIX = r"{\fs22\b1}"
+"""ASS override applied to the first cue's text. ``\\fs22`` boosts font
+size from the default 16 to 22 (~+37%), ``\\b1`` keeps it bold. libass
+parses these inline tags during the `subtitles=` filter render."""
 
 
 def srt_ts(seconds: float) -> str:
@@ -59,12 +74,16 @@ def _is_function(text: str) -> bool:
     return _norm(text) in FUNC
 
 
+def _is_conjunction(text: str) -> bool:
+    return _norm(text) in CONJ_BREAK
+
+
 def _chunk_chars(chunk: list[dict]) -> int:
     return sum(len((w.get("text") or "").strip()) for w in chunk) + max(0, len(chunk) - 1)
 
 
 def build_srt(
-    words: list[dict], seg_start: float, seg_end: float
+    words: list[dict], seg_start: float, seg_end: float, *, hook_boost: bool = True
 ) -> list[tuple[float, float, str]]:
     in_range = [
         w
@@ -90,6 +109,12 @@ def build_srt(
         if prev_end is not None and (w["start"] - prev_end) >= 0.5 and len(cur) >= MIN_WORDS:
             flush()
         if cur and _chunk_chars(cur) + 1 + len(text) > MAX_CHARS and len(cur) >= MIN_WORDS:
+            flush()
+        # Coordinating conjunction starts a clause — flush BEFORE adding it
+        # so the new clause becomes the start of the next cue. We only do
+        # this once the current chunk has hit min_words, otherwise we'd
+        # leave too-short cues like "Sim, mas…".
+        if cur and _is_conjunction(text) and len(cur) >= MIN_WORDS:
             flush()
         cur.append(w)
         last_char = text[-1] if text else ""
@@ -128,7 +153,14 @@ def build_srt(
     if entries:
         a, b, t = entries[0]
         if t and t[0].islower():
-            entries[0] = (a, b, t[0].upper() + t[1:])
+            t = t[0].upper() + t[1:]
+        # Hook boost: prepend an ASS inline override to the first cue's text.
+        # libass picks this up during `subtitles=` burn-in to render the
+        # opening line slightly bigger + still bold — pulls the eye in the
+        # first 2s on Reels/TikTok where retention is decided.
+        if hook_boost:
+            t = HOOK_PREFIX + t
+        entries[0] = (a, b, t)
     return entries
 
 
@@ -146,6 +178,11 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("slug")
     ap.add_argument("cut_index", type=int)
+    ap.add_argument(
+        "--no-hook-boost",
+        action="store_true",
+        help="don't prepend the hook size-boost ASS tag to the first cue",
+    )
     args = ap.parse_args()
     msg_dir = MESSAGES / args.slug
     transcript = json.loads((msg_dir / "transcript.json").read_text())
@@ -159,7 +196,7 @@ def main() -> None:
     srts_dir = msg_dir / "srts"
     srts_dir.mkdir(exist_ok=True)
     out = srts_dir / f"{n:02d}-{slug}.srt"
-    entries = build_srt(transcript["words"], seg_start, seg_end)
+    entries = build_srt(transcript["words"], seg_start, seg_end, hook_boost=not args.no_hook_boost)
     write_srt(entries, out)
     print(
         json.dumps(
