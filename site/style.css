@@ -110,21 +110,37 @@ code {
 
 .lang-switch {
   display: flex;
-  gap: 4px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  gap: 6px;
+  align-items: center;
 }
 
 .lang-switch a {
-  padding: 4px 10px;
-  border-radius: 6px;
-  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  padding: 0;
+  opacity: 0.55;
+  transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lang-switch a:hover {
+  opacity: 1;
+  transform: translateY(-1px);
 }
 
 .lang-switch a.active {
-  background: rgba(251, 197, 49, 0.12);
-  color: var(--gold);
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--gold), 0 0 0 4px rgba(251, 197, 49, 0.18);
+}
+
+.lang-switch img {
+  width: 26px;
+  height: 26px;
+  display: block;
+  border-radius: 999px;
 }
 
 @media (max-width: 800px) {
@@ -310,6 +326,65 @@ section h2 {
   margin: 0 0 36px;
 }
 
+/* ─── editors compatibility section ───────────────────────── */
+.editors-section {
+  background: linear-gradient(180deg, var(--ink) 0%, #0c1020 100%);
+}
+
+.editors-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.editor-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px 12px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  color: var(--paper);
+  text-align: center;
+  transition: border-color 0.2s ease, transform 0.18s ease, background 0.18s ease;
+}
+
+.editor-card:hover {
+  border-color: rgba(251, 197, 49, 0.45);
+  background: rgba(251, 197, 49, 0.05);
+  transform: translateY(-2px);
+  opacity: 1;
+}
+
+.editor-card svg {
+  width: 36px;
+  height: 36px;
+  display: block;
+}
+
+.editor-card span {
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+@media (max-width: 900px) {
+  .editors-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .editors-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* ─── install section ──────────────────────────────────────── */
 .install {
   background: linear-gradient(180deg, var(--ink) 0%, #0b1024 100%);
@@ -374,6 +449,102 @@ section h2 {
   color: var(--gold);
   font-style: normal;
   font-weight: 700;
+}
+
+/* Install paths — stacked cards (curl / prompt / docker). */
+.install-paths {
+  display: grid;
+  gap: 22px;
+  margin-top: 8px;
+}
+
+.install-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 22px 24px 26px;
+}
+
+.install-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.install-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.install-card-head h3 {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.install-card-head p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.install-card .code-card {
+  margin-top: 0;
+  padding: 18px 22px;
+}
+
+.install-card .code-card pre {
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+/* Day-to-day commands cheat-sheet under the install paths. */
+.commands-title {
+  margin: 48px 0 18px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: -0.01em;
+}
+
+.commands-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.commands-grid > div {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px 14px;
+  text-align: center;
+}
+
+.commands-grid code {
+  display: block;
+  font-size: 0.78rem;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.commands-grid p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 760px) {
+  .commands-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* ─── features grid ────────────────────────────────────────── */
@@ -638,9 +809,24 @@ section h2 {
   gap: 12px;
 }
 
+.lang-foot {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
 .lang-foot a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--muted);
-  margin: 0 4px;
+}
+
+.lang-foot a img {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: inline-block;
 }
 
 .lang-foot a.active {

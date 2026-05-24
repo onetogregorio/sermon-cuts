@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" aria-label="Español">
+  <defs>
+    <clipPath id="esc"><circle cx="20" cy="20" r="20"/></clipPath>
+  </defs>
+  <g clip-path="url(#esc)">
+    <rect width="40" height="10" fill="#aa151b"/>
+    <rect y="10" width="40" height="20" fill="#f1bf00"/>
+    <rect y="30" width="40" height="10" fill="#aa151b"/>
+    <!-- minimalist escudo nod: just a small ochre ring on the yellow band so it reads as Spain without copying the coat of arms in detail -->
+    <circle cx="14" cy="20" r="3" fill="none" stroke="#aa151b" stroke-width="0.9"/>
+    <rect x="11.6" y="18.5" width="4.8" height="3" fill="none" stroke="#aa151b" stroke-width="0.6"/>
+  </g>
+  <circle cx="20" cy="20" r="19.5" fill="none" stroke="rgba(0,0,0,0.18)" stroke-width="1"/>
+</svg>

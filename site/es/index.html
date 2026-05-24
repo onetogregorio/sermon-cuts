@@ -21,15 +21,15 @@
       <span class="logo-text">Cortes de Sermón</span>
     </a>
     <nav class="nav">
+      <a href="#editors">Editores</a>
       <a href="#install">Instalar</a>
-      <a href="#demo">Demo</a>
       <a href="#features">Recursos</a>
       <a href="#sponsors">Patrocinadores</a>
     </nav>
     <div class="lang-switch">
-      <a href="../">EN</a>
-      <a href="../pt/">PT</a>
-      <a href="./" class="active">ES</a>
+      <a href="../" title="English"><img src="../assets/flags/us.svg" alt="English" /></a>
+      <a href="../pt/" title="Português"><img src="../assets/flags/br.svg" alt="Português" /></a>
+      <a href="./" class="active" title="Español"><img src="../assets/flags/es.svg" alt="Español" /></a>
     </div>
   </header>
 
@@ -73,17 +73,97 @@
       </div>
     </section>
 
+    <section id="editors" class="editors-section">
+      <div class="container">
+        <p class="kicker">Funciona con tu editor de IA</p>
+        <h2>Corre en <span class="gold">cualquier agente</span> que ejecute scripts en terminal.</h2>
+        <p class="section-lede">
+          Cortes de Sermón se entrega como un par SKILL.md + scripts/. Cualquier editor
+          de IA que lea instrucciones y ejecute un pipeline en shell puede operarlo.
+        </p>
+        <div class="editors-grid">
+          <a class="editor-card" href="https://claude.com/claude-code" target="_blank" rel="noopener" title="Claude Code by Anthropic">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4 L19 13 L28 16 L19 19 L16 28 L13 19 L4 16 L13 13 Z" fill="#d97757"/></svg>
+            <span>Claude Code</span>
+          </a>
+          <a class="editor-card" href="https://cursor.com" target="_blank" rel="noopener" title="Cursor">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 6 L16 2 L27 6 L27 26 L16 30 L5 26 Z" fill="#0a0a0a" stroke="#fff" stroke-width="0.6"/><path d="M5 6 L16 12 L27 6 M16 12 L16 30" stroke="#fff" stroke-width="1.2" fill="none"/></svg>
+            <span>Cursor</span>
+          </a>
+          <a class="editor-card" href="https://github.com/openai/codex" target="_blank" rel="noopener" title="OpenAI Codex CLI">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13" fill="#10a37f"/><text x="16" y="21" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="900" font-size="11" fill="#fff">{ }</text></svg>
+            <span>Codex CLI</span>
+          </a>
+          <a class="editor-card" href="https://github.com/cline/cline" target="_blank" rel="noopener" title="Cline (extensión VS Code)">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#7b3ff2"/><path d="M9 11 L23 11 M9 16 L23 16 M9 21 L18 21" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+            <span>Cline</span>
+          </a>
+          <a class="editor-card" href="https://aider.chat" target="_blank" rel="noopener" title="Aider">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#14181f"/><path d="M16 8 L23 24 L19 24 L17.5 20 L14.5 20 L13 24 L9 24 Z M15.4 17 L16.6 17 L16 15.2 Z" fill="#fbc531"/></svg>
+            <span>Aider</span>
+          </a>
+          <a class="editor-card" href="https://continue.dev" target="_blank" rel="noopener" title="Continue">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#1a1a2e"/><path d="M11 10 L19 16 L11 22" stroke="#5d9cf2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Continue</span>
+          </a>
+          <a class="editor-card" href="https://windsurf.com" target="_blank" rel="noopener" title="Windsurf">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0a0a0a"/><path d="M5 18 Q10 13 16 18 T27 18" stroke="#00d4aa" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M5 23 Q10 18 16 23 T27 23" stroke="#00d4aa" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.55"/></svg>
+            <span>Windsurf</span>
+          </a>
+          <a class="editor-card" href="https://antigravity.google" target="_blank" rel="noopener" title="Antigravity by Google">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0a0a0a"/><path d="M16 24 L16 9 M11 14 L16 9 L21 14" stroke="#4285f4" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Antigravity</span>
+          </a>
+          <a class="editor-card" href="https://opencode.ai" target="_blank" rel="noopener" title="OpenCode">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#161616"/><text x="16" y="20" text-anchor="middle" font-family="ui-monospace,monospace" font-weight="700" font-size="11" fill="#fbc531">&gt;_</text></svg>
+            <span>OpenCode</span>
+          </a>
+          <a class="editor-card" href="https://zed.dev" target="_blank" rel="noopener" title="Zed">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0f0f10"/><path d="M9 10 L23 10 L9 22 L23 22" stroke="#dec896" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Zed</span>
+          </a>
+        </div>
+        <p class="micro" style="text-align:center;margin-top:18px">
+          ¿No ves el tuyo? Si lee un SKILL.md y ejecuta comandos shell, funciona.
+        </p>
+      </div>
+    </section>
+
     <section id="install" class="install">
       <div class="container">
-        <p class="kicker">El install en un prompt</p>
-        <h2>No leas documentación. <span class="gold">Pega esto.</span></h2>
+        <p class="kicker">Instalar — elige tu camino</p>
+        <h2>De cero al primer corte en <span class="gold">menos de 5 minutos.</span></h2>
         <p class="section-lede">
-          Abre Claude Code, Cursor, Codex, o cualquier editor de IA. Pega el
-          prompt abajo. Responde las preguntas. Listo en menos de 5 minutos.
+          Tres caminos. El primero si tienes terminal, el segundo si vives
+          en un editor de IA, el tercero para Linux/Windows.
         </p>
-        <div class="code-card">
-          <button class="copy-btn" data-copy="install-prompt">Copiar</button>
-          <pre id="install-prompt">Instala el skill Sermon Cuts (https://github.com/onetogregorio/sermon-cuts) en mi máquina. Guíame por estos pasos y detente si alguno falla:
+
+        <div class="install-paths">
+          <div class="install-card">
+            <div class="install-card-head">
+              <span class="install-icon">🟢</span>
+              <div>
+                <h3>Un comando en terminal</h3>
+                <p>Recomendado. Funciona en cualquier shell macOS o Linux.</p>
+              </div>
+            </div>
+            <div class="code-card">
+              <button class="copy-btn" data-copy="install-curl">Copiar</button>
+              <pre id="install-curl">curl -fsSL https://onetogregorio.github.io/sermon-cuts/install.sh | bash</pre>
+            </div>
+          </div>
+
+          <div class="install-card">
+            <div class="install-card-head">
+              <span class="install-icon">🟡</span>
+              <div>
+                <h3>A través de tu editor de IA</h3>
+                <p>Claude Code, Cursor, Codex, Cline, Aider — cualquiera con acceso al terminal.</p>
+              </div>
+            </div>
+            <div class="code-card">
+              <button class="copy-btn" data-copy="install-prompt">Copiar</button>
+              <pre id="install-prompt">Instala el skill Sermon Cuts (https://github.com/onetogregorio/sermon-cuts) en mi máquina. Guíame por estos pasos y detente si alguno falla:
 
 1. Detecta mi SO (macOS o Linux). En macOS, asegúrate de que Homebrew esté instalado.
 2. Instala dependencias del sistema: ffmpeg (con libass), yt-dlp, Python 3.12+.
@@ -92,14 +172,42 @@
 5. Crea symlinks de scripts/, config/, prompts/ hacia ~/.claude/skills/sermon-cuts/ y copia SKILL.md allí también.
 6. Pregúntame si quiero transcripción mejor vía Groq Whisper. Si sí, abre https://console.groq.com/keys, pídeme pegar la clave y agrega GROQ_API_KEY=... en ~/.env.
 7. Pregúntame si quiero la fuente de marca Outfit Black (https://fonts.google.com/specimen/Outfit). Si sí, descárgala e instálala en mi carpeta de fuentes.
-8. Ejecuta ./scripts/pipeline.sh --help para confirmar que el skill está listo.
+8. Ejecuta ./scripts/pipeline.sh doctor para confirmar que el skill está listo.
 9. Dame un ejemplo de una línea de cómo cortar mi primer sermón.
 
 Reporta éxito o el paso que falló al final.</pre>
+            </div>
+          </div>
+
+          <div class="install-card">
+            <div class="install-card-head">
+              <span class="install-icon">🐳</span>
+              <div>
+                <h3>Docker</h3>
+                <p>Linux, Windows, o donde pip es complicado. Sin deps en el host.</p>
+              </div>
+            </div>
+            <div class="code-card">
+              <button class="copy-btn" data-copy="install-docker">Copiar</button>
+              <pre id="install-docker">docker run --rm \
+  -v "$(pwd)/out:/work/memory/messages" \
+  -e GROQ_API_KEY=$GROQ_API_KEY \
+  ghcr.io/onetogregorio/sermon-cuts &lt;url-de-youtube&gt;</pre>
+            </div>
+          </div>
         </div>
+
         <p class="after-prompt">
           Luego solo di: <em>"corta esta predicación: &lt;URL de YouTube&gt;"</em>
         </p>
+
+        <h3 class="commands-title">Comandos del día a día</h3>
+        <div class="commands-grid">
+          <div><code>pipeline.sh doctor</code><p>health check (corre primero)</p></div>
+          <div><code>pipeline.sh &lt;url&gt;</code><p>ingest + transcribe + propone</p></div>
+          <div><code>pipeline.sh review &lt;slug&gt;</code><p>UI en terminal para elegir</p></div>
+          <div><code>pipeline.sh ui</code><p>UI web en localhost:7860</p></div>
+        </div>
       </div>
     </section>
 
@@ -241,9 +349,9 @@ Reporta éxito o el paso que falló al final.</pre>
         <a href="https://claude.com/claude-code">Claude Code</a>
       </p>
       <p class="lang-foot">
-        <a href="../">English</a> ·
-        <a href="../pt/">Português</a> ·
-        <a href="./" class="active">Español</a>
+        <a href="../" title="English"><img src="../assets/flags/us.svg" alt="" /> English</a>
+        <a href="../pt/" title="Português"><img src="../assets/flags/br.svg" alt="" /> Português</a>
+        <a href="./" class="active" title="Español"><img src="../assets/flags/es.svg" alt="" /> Español</a>
       </p>
     </div>
   </footer>

@@ -21,15 +21,15 @@
       <span class="logo-text">Sermon Cuts</span>
     </a>
     <nav class="nav">
+      <a href="#editors">Editors</a>
       <a href="#install">Install</a>
-      <a href="#demo">Demo</a>
       <a href="#features">Features</a>
       <a href="#sponsors">Sponsors</a>
     </nav>
     <div class="lang-switch">
-      <a href="./" class="active">EN</a>
-      <a href="./pt/">PT</a>
-      <a href="./es/">ES</a>
+      <a href="./" class="active" title="English"><img src="./assets/flags/us.svg" alt="English" /></a>
+      <a href="./pt/" title="Português"><img src="./assets/flags/br.svg" alt="Português" /></a>
+      <a href="./es/" title="Español"><img src="./assets/flags/es.svg" alt="Español" /></a>
     </div>
   </header>
 
@@ -72,17 +72,97 @@
       </div>
     </section>
 
+    <section id="editors" class="editors-section">
+      <div class="container">
+        <p class="kicker">Works with your AI editor</p>
+        <h2>Drop it into <span class="gold">any AI coding agent</span> that runs shell scripts.</h2>
+        <p class="section-lede">
+          Sermon Cuts ships as a SKILL.md + scripts/ pair. Any AI editor
+          that can read instructions and run a terminal pipeline can drive it.
+        </p>
+        <div class="editors-grid">
+          <a class="editor-card" href="https://claude.com/claude-code" target="_blank" rel="noopener" title="Claude Code by Anthropic">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4 L19 13 L28 16 L19 19 L16 28 L13 19 L4 16 L13 13 Z" fill="#d97757"/></svg>
+            <span>Claude Code</span>
+          </a>
+          <a class="editor-card" href="https://cursor.com" target="_blank" rel="noopener" title="Cursor">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 6 L16 2 L27 6 L27 26 L16 30 L5 26 Z" fill="#0a0a0a" stroke="#fff" stroke-width="0.6"/><path d="M5 6 L16 12 L27 6 M16 12 L16 30" stroke="#fff" stroke-width="1.2" fill="none"/></svg>
+            <span>Cursor</span>
+          </a>
+          <a class="editor-card" href="https://github.com/openai/codex" target="_blank" rel="noopener" title="OpenAI Codex CLI">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13" fill="#10a37f"/><text x="16" y="21" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="900" font-size="11" fill="#fff">{ }</text></svg>
+            <span>Codex CLI</span>
+          </a>
+          <a class="editor-card" href="https://github.com/cline/cline" target="_blank" rel="noopener" title="Cline (VS Code extension)">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#7b3ff2"/><path d="M9 11 L23 11 M9 16 L23 16 M9 21 L18 21" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+            <span>Cline</span>
+          </a>
+          <a class="editor-card" href="https://aider.chat" target="_blank" rel="noopener" title="Aider">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#14181f"/><path d="M16 8 L23 24 L19 24 L17.5 20 L14.5 20 L13 24 L9 24 Z M15.4 17 L16.6 17 L16 15.2 Z" fill="#fbc531"/></svg>
+            <span>Aider</span>
+          </a>
+          <a class="editor-card" href="https://continue.dev" target="_blank" rel="noopener" title="Continue">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#1a1a2e"/><path d="M11 10 L19 16 L11 22" stroke="#5d9cf2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Continue</span>
+          </a>
+          <a class="editor-card" href="https://windsurf.com" target="_blank" rel="noopener" title="Windsurf">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0a0a0a"/><path d="M5 18 Q10 13 16 18 T27 18" stroke="#00d4aa" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M5 23 Q10 18 16 23 T27 23" stroke="#00d4aa" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.55"/></svg>
+            <span>Windsurf</span>
+          </a>
+          <a class="editor-card" href="https://antigravity.google" target="_blank" rel="noopener" title="Antigravity by Google">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0a0a0a"/><path d="M16 24 L16 9 M11 14 L16 9 L21 14" stroke="#4285f4" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Antigravity</span>
+          </a>
+          <a class="editor-card" href="https://opencode.ai" target="_blank" rel="noopener" title="OpenCode">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#161616"/><text x="16" y="20" text-anchor="middle" font-family="ui-monospace,monospace" font-weight="700" font-size="11" fill="#fbc531">&gt;_</text></svg>
+            <span>OpenCode</span>
+          </a>
+          <a class="editor-card" href="https://zed.dev" target="_blank" rel="noopener" title="Zed">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0f0f10"/><path d="M9 10 L23 10 L9 22 L23 22" stroke="#dec896" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Zed</span>
+          </a>
+        </div>
+        <p class="micro" style="text-align:center;margin-top:18px">
+          Not seeing yours? If it can read a SKILL.md and run shell commands, it works.
+        </p>
+      </div>
+    </section>
+
     <section id="install" class="install">
       <div class="container">
-        <p class="kicker">The one-prompt install</p>
-        <h2>Don't read install docs. <span class="gold">Paste this.</span></h2>
+        <p class="kicker">Install — pick your path</p>
+        <h2>Up and running in <span class="gold">under five minutes.</span></h2>
         <p class="section-lede">
-          Open Claude Code, Cursor, Codex, or any AI editor. Paste the prompt
-          below. Answer the questions. Done in under 5 minutes.
+          Three ways in. Use the first one if you have a terminal, the
+          second if you live in an AI editor, the third on Linux/Windows.
         </p>
-        <div class="code-card">
-          <button class="copy-btn" data-copy="install-prompt">Copy</button>
-          <pre id="install-prompt">Install the Sermon Cuts skill (https://github.com/onetogregorio/sermon-cuts) on this machine. Walk me through these steps and stop if anything fails:
+
+        <div class="install-paths">
+          <div class="install-card">
+            <div class="install-card-head">
+              <span class="install-icon">🟢</span>
+              <div>
+                <h3>One terminal command</h3>
+                <p>Recommended. Works on any macOS or Linux shell.</p>
+              </div>
+            </div>
+            <div class="code-card">
+              <button class="copy-btn" data-copy="install-curl">Copy</button>
+              <pre id="install-curl">curl -fsSL https://onetogregorio.github.io/sermon-cuts/install.sh | bash</pre>
+            </div>
+          </div>
+
+          <div class="install-card">
+            <div class="install-card-head">
+              <span class="install-icon">🟡</span>
+              <div>
+                <h3>Through your AI editor</h3>
+                <p>Claude Code, Cursor, Codex, Cline, Aider — anything with shell access.</p>
+              </div>
+            </div>
+            <div class="code-card">
+              <button class="copy-btn" data-copy="install-prompt">Copy</button>
+              <pre id="install-prompt">Install the Sermon Cuts skill (https://github.com/onetogregorio/sermon-cuts) on this machine. Walk me through these steps and stop if anything fails:
 
 1. Detect my OS (macOS or Linux). On macOS, make sure Homebrew is installed.
 2. Install system deps: ffmpeg (with libass), yt-dlp, Python 3.12+.
@@ -91,14 +171,42 @@
 5. Symlink scripts/, config/, prompts/ into ~/.claude/skills/sermon-cuts/ and copy SKILL.md there too.
 6. Ask if I want to enable better transcription via Groq Whisper. If yes, open https://console.groq.com/keys, ask me to paste the key, and add GROQ_API_KEY=... to ~/.env.
 7. Ask if I want the brand font Outfit Black (https://fonts.google.com/specimen/Outfit). If yes, download it and install to my user fonts folder.
-8. Run ./scripts/pipeline.sh --help to confirm the skill is wired up.
+8. Run ./scripts/pipeline.sh doctor to confirm the skill is wired up.
 9. Tell me a one-line example of how to cut my first sermon.
 
 Report success or the failed step at the end.</pre>
+            </div>
+          </div>
+
+          <div class="install-card">
+            <div class="install-card-head">
+              <span class="install-icon">🐳</span>
+              <div>
+                <h3>Docker</h3>
+                <p>Linux, Windows, or anywhere pip is painful. No host deps.</p>
+              </div>
+            </div>
+            <div class="code-card">
+              <button class="copy-btn" data-copy="install-docker">Copy</button>
+              <pre id="install-docker">docker run --rm \
+  -v "$(pwd)/out:/work/memory/messages" \
+  -e GROQ_API_KEY=$GROQ_API_KEY \
+  ghcr.io/onetogregorio/sermon-cuts &lt;youtube-url&gt;</pre>
+            </div>
+          </div>
         </div>
+
         <p class="after-prompt">
           Then just say: <em>"cut this sermon: &lt;YouTube URL&gt;"</em>
         </p>
+
+        <h3 class="commands-title">Day-to-day commands</h3>
+        <div class="commands-grid">
+          <div><code>pipeline.sh doctor</code><p>health check (run first)</p></div>
+          <div><code>pipeline.sh &lt;url&gt;</code><p>ingest + transcribe + propose</p></div>
+          <div><code>pipeline.sh review &lt;slug&gt;</code><p>terminal UI to pick &amp; render</p></div>
+          <div><code>pipeline.sh ui</code><p>web UI on localhost:7860</p></div>
+        </div>
       </div>
     </section>
 
@@ -238,9 +346,9 @@ Report success or the failed step at the end.</pre>
         <a href="https://claude.com/claude-code">Claude Code</a>
       </p>
       <p class="lang-foot">
-        <a href="./" class="active">English</a> ·
-        <a href="./pt/">Português</a> ·
-        <a href="./es/">Español</a>
+        <a href="./" class="active" title="English"><img src="./assets/flags/us.svg" alt="" /> English</a>
+        <a href="./pt/" title="Português"><img src="./assets/flags/br.svg" alt="" /> Português</a>
+        <a href="./es/" title="Español"><img src="./assets/flags/es.svg" alt="" /> Español</a>
       </p>
     </div>
   </footer>

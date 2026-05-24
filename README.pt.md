@@ -64,35 +64,75 @@ leia um `SKILL.md` e rode scripts.
 
 ---
 
-## Instalar com um prompt só 🪄
+## Instalar — escolha seu caminho
 
-Não quer ler documentação de instalação? Cola esse prompt no **Claude Code**,
-**Cursor**, **Codex**, **Cline**, **Aider** — qualquer agente de IA com acesso
-ao terminal — e ele instala tudo pra você.
+### 🟢 Mais fácil: um comando, qualquer terminal
+
+```bash
+curl -fsSL https://onetogregorio.github.io/sermon-cuts/install.sh | bash
+```
+
+Detecta seu sistema, instala ffmpeg/yt-dlp/Python, clona o repo, cria um
+venv, symlinka a skill em `~/.claude/skills/sermon-cuts/`, opcionalmente
+configura Groq + Outfit, e roda um health check no final. **Pode rodar
+de novo sem medo** — não sobrescreve nada que já existe.
+
+### 🟡 Através do seu editor de IA (Claude Code, Cursor, Codex…)
+
+Cola esse prompt em qualquer editor com acesso ao terminal:
 
 > Instala a skill **Sermon Cuts** (https://github.com/onetogregorio/sermon-cuts)
 > na minha máquina. Me guia pelos passos abaixo e para se algum falhar:
 >
-> 1. Detecta meu sistema (macOS ou Linux). No macOS, garante que o Homebrew
->    está instalado.
-> 2. Instala as dependências de sistema: `ffmpeg` (com libass), `yt-dlp`,
->    Python 3.12+.
-> 3. Clona o repo pra `~/code/sermon-cuts` (ou me pergunta onde colocar).
-> 4. Cria um venv Python dentro do repo e roda `pip install -r requirements.txt`.
+> 1. Detecta meu sistema (macOS ou Linux). No macOS, garante Homebrew.
+> 2. Instala deps de sistema: `ffmpeg` (com libass), `yt-dlp`, Python 3.12+.
+> 3. Clona o repo pra `~/code/sermon-cuts` (ou me pergunta onde).
+> 4. Cria venv Python dentro do repo e roda `pip install -r requirements.txt`.
 > 5. Symlinka `scripts/`, `config/`, `prompts/` pra `~/.claude/skills/sermon-cuts/`
->    e copia o `SKILL.md` pra lá também.
+>    e copia o `SKILL.md` pra lá.
 > 6. Me pergunta se quero transcrição melhor via Groq Whisper. Se sim,
->    abre https://console.groq.com/keys, pede pra eu colar a chave e adiciona
+>    abre https://console.groq.com/keys, pede a chave e adiciona
 >    `GROQ_API_KEY=...` no `~/.env`.
-> 7. Me pergunta se quero a fonte da marca Outfit Black
->    (https://fonts.google.com/specimen/Outfit). Se sim, baixa e instala
->    na minha pasta de fontes.
-> 8. Roda `./scripts/pipeline.sh --help` pra confirmar que a skill está pronta.
+> 7. Me pergunta se quero a fonte Outfit Black
+>    (https://fonts.google.com/specimen/Outfit). Se sim, baixa e instala.
+> 8. Roda `./scripts/pipeline.sh doctor` pra confirmar a instalação.
 > 9. Me dá um exemplo de uma linha de como cortar meu primeiro sermão.
 >
 > Reporta sucesso ou o passo que falhou no final.
 
-Pronto. Agora é só falar *"corta essa pregação: <URL do YouTube>"* pro mesmo agente.
+Depois do install, é só falar *"corta essa pregação: \<URL do YouTube\>"* pro mesmo agente.
+
+### 🐳 Docker (Linux/Windows/sem pip)
+
+```bash
+docker run --rm \
+  -v "$(pwd)/out:/work/memory/messages" \
+  -e GROQ_API_KEY=$GROQ_API_KEY \
+  ghcr.io/onetogregorio/sermon-cuts <url-do-youtube>
+```
+
+> Build local: `docker build -t sermon-cuts .` se quiser ajustar a imagem.
+
+---
+
+## Workflow do dia-a-dia — os quatro comandos que importam
+
+```bash
+pipeline.sh doctor                              # health check (rode esse primeiro)
+pipeline.sh <url-ou-mp4>                        # ingest + transcreve + propõe cortes
+pipeline.sh review <slug>                       # ↑↓ + SPACE + ENTER pra escolher + renderizar
+pipeline.sh ui                                  # abre a UI web em localhost:7860
+```
+
+Ou, sem terminal nenhum:
+
+```bash
+pipeline.sh ui                                  # drag-drop, checkboxes, downloads
+```
+
+> 💡 **Sem chave Groq?** Deixa o `--provider=auto` escolher `local`
+> (usa faster-whisper offline, sem API key, ~1× realtime em Apple Silicon)
+> ou `youtube` (auto-captions, instantâneo, qualidade um pouco menor).
 
 ---
 

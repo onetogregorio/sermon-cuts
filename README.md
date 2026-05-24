@@ -64,11 +64,22 @@ can read a `SKILL.md` and run shell scripts.
 
 ---
 
-## Install with one prompt 🪄
+## Install — pick your path
 
-Don't want to read install docs? Paste this prompt into **Claude Code**,
-**Cursor**, **Codex**, **Cline**, **Aider** — any AI coding agent with shell
-access — and it'll install the whole thing for you.
+### 🟢 Easiest: one command in any terminal
+
+```bash
+curl -fsSL https://onetogregorio.github.io/sermon-cuts/install.sh | bash
+```
+
+Detects your OS, installs ffmpeg/yt-dlp/Python, clones the repo, creates
+a Python venv, symlinks the skill into `~/.claude/skills/sermon-cuts/`,
+optionally configures Groq + Outfit, and runs a health check at the end.
+**Re-runnable safely** — won't overwrite anything you already have.
+
+### 🟡 Through your AI editor (Claude Code, Cursor, Codex…)
+
+Paste this prompt into any AI editor with shell access:
 
 > Install the **Sermon Cuts** skill (https://github.com/onetogregorio/sermon-cuts)
 > on this machine. Walk me through these steps and stop if anything fails:
@@ -84,12 +95,44 @@ access — and it'll install the whole thing for you.
 >    `GROQ_API_KEY=...` to `~/.env`.
 > 7. Ask if I want the brand font Outfit Black (https://fonts.google.com/specimen/Outfit).
 >    If yes, download it and install to my user fonts folder.
-> 8. Run `./scripts/pipeline.sh --help` to confirm the skill is wired up.
+> 8. Run `./scripts/pipeline.sh doctor` to confirm the skill is wired up.
 > 9. Tell me a one-line example of how to cut my first sermon.
 >
 > Report success or the failed step at the end.
 
-That's it. Next, just say *"cut this sermon: <YouTube URL>"* to the same agent.
+After install, just say *"cut this sermon: \<YouTube URL\>"* to the same agent.
+
+### 🐳 Docker (Linux/Windows/no-pip)
+
+```bash
+docker run --rm \
+  -v "$(pwd)/out:/work/memory/messages" \
+  -e GROQ_API_KEY=$GROQ_API_KEY \
+  ghcr.io/onetogregorio/sermon-cuts <youtube-url>
+```
+
+> Build locally with `docker build -t sermon-cuts .` if you want to tweak the image.
+
+---
+
+## Daily workflow — the four commands you'll actually use
+
+```bash
+pipeline.sh doctor                              # health check (run this first)
+pipeline.sh <url-or-mp4>                        # ingest + transcribe + propose cuts
+pipeline.sh review <slug>                       # ↑↓ + SPACE + ENTER to pick + render
+pipeline.sh ui                                  # open the web UI on localhost:7860
+```
+
+Or, for a no-terminal workflow:
+
+```bash
+pipeline.sh ui                                  # drag-drop, checkboxes, downloads
+```
+
+> 💡 **Don't have a Groq key?** Either let it auto-pick `--provider=local`
+> (uses faster-whisper offline, no API key, ~1× realtime on Apple Silicon),
+> or `--provider=youtube` (auto-captions, instant, slightly lower accuracy).
 
 ---
 
