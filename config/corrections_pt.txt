@@ -1,37 +1,33 @@
 # Global PT-BR transcription corrections — auto-applied by 06b_scrub_srt
 #
-# One `wrong=right` pair per line. Empty lines and #-comments are skipped.
-# Whitespace around = is trimmed. Replacement is case-sensitive substring
-# (not whole-word) — be specific to avoid clobbering legitimate text.
+# This file is INTENTIONALLY EMPTY by default. The project ships agnostic
+# of any specific preacher, vocabulary, or theological tradition. Each
+# user/community adds the patterns that recur in their OWN sermons.
 #
-# Per-message overrides go in memory/messages/<slug>/corrections.txt and
-# are applied AFTER this global file (so a per-slug entry wins).
+# Format: one `wrong=right` pair per line. Empty lines and #-comments
+# are skipped. Whitespace around `=` is trimmed. Replacement is
+# case-sensitive substring (not whole-word) — be specific to avoid
+# clobbering legitimate text.
 #
-# When to add an entry here vs in a per-slug file:
-#   - Global = recurring transcriber mistake across multiple sermons
-#     (julgo/jugo, theological terms YouTube mishears the same way).
-#   - Per-slug = one-off (a name, a specific noun the speaker used).
-
-# ─── Theological / Bible vocabulary ──────────────────────────────────────
-# YouTube auto-captions transcribe "jugo" (yoke) as "julgo" (variant
-# spelling with an extra L). Standardize on the dictionary form.
-julgo=jugo
-
-# Some Whisper/VTT models render "Cristo" as "Quisto" when the audio is
-# noisy or the speaker emphasizes the C. Always wrong.
-Quisto=Cristo
-quisto=cristo
-
-# "Espirito" without the acute accent is a common YouTube slip.
-Espirito Santo=Espírito Santo
-espirito santo=Espírito Santo
-
-# ─── Common stem typos ───────────────────────────────────────────────────
-# Cansaço/canseira frequently transcribed as "canira" (missing 'se').
-canira=canseira
-Canira=Canseira
-
-# ─── Concatenations YouTube produces ─────────────────────────────────────
-# "para a" sometimes collapses to "paraa" when the speaker runs the
-# words together. Restore the space.
-paraa =para a
+# Where to add entries:
+#   - HERE (global)            → a transcriber mistake your preacher makes
+#                                across many sermons (a specific accent
+#                                pattern, a recurring theological term).
+#   - memory/messages/<slug>/corrections.txt → one-off for a single sermon
+#                                (a proper noun, a specific quote).
+#
+# Per-slug entries are applied AFTER the global file, so they can override
+# or extend it.
+#
+# ─── Example entries (commented out — uncomment to opt in) ──────────────
+#
+# Theological vocabulary your transcriber gets wrong consistently:
+#   Quisto=Cristo
+#   espirito santo=Espírito Santo
+#
+# Words your specific preacher mispronounces or YouTube auto-captions
+# botches in their voice:
+#   canira=canseira
+#
+# Concatenations from your preacher's speaking style:
+#   paraa =para a
