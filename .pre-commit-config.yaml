@@ -1,0 +1,30 @@
+# Pre-commit hooks for sermon-cuts.
+#
+# Install once per checkout:
+#   pip install pre-commit
+#   pre-commit install
+#
+# Run on all files:
+#   pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        # Allow GitHub Actions templates with custom tags.
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        # Allow the demo MP4 (~5MB) but block anything larger.
+        args: [--maxkb=8000]

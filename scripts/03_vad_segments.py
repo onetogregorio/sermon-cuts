@@ -18,13 +18,20 @@ Schema:
 Cut boundaries should land in silences ≥ min_silence (default 0.5s) so the
 audio doesn't snap mid-breath.
 """
+
 from __future__ import annotations
-import argparse, json, subprocess, sys, tempfile
+
+import argparse
+import json
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
+
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import resolve_ffmpeg
+from _common import SCHEMA_VERSION, fail, resolve_ffmpeg
 
 SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
 MESSAGES = SKILL_ROOT / "memory/messages"
@@ -33,11 +40,24 @@ FFMPEG = resolve_ffmpeg(CFG.get("ffmpeg_bin"))
 
 
 def extract_wav_16k(src: Path, out: Path) -> None:
-    subprocess.run([
-        FFMPEG, "-y", "-i", str(src),
-        "-ac", "1", "-ar", "16000", "-vn",
-        "-c:a", "pcm_s16le", str(out),
-    ], check=True, stderr=subprocess.DEVNULL)
+    subprocess.run(
+        [
+            FFMPEG,
+            "-y",
+            "-i",
+            str(src),
+            "-ac",
+            "1",
+            "-ar",
+            "16000",
+            "-vn",
+            "-c:a",
+            "pcm_s16le",
+            str(out),
+        ],
+        check=True,
+        stderr=subprocess.DEVNULL,
+    )
 
 
 def run_vad(wav: Path) -> list[dict]:
@@ -46,9 +66,10 @@ def run_vad(wav: Path) -> list[dict]:
     We read via soundfile (avoids torchaudio→torchcodec dependency surprise),
     convert to torch float32, then pass to get_speech_timestamps.
     """
-    import torch
     import soundfile as sf
-    from silero_vad import load_silero_vad, get_speech_timestamps
+    import torch
+    from silero_vad import get_speech_timestamps, load_silero_vad
+
     model = load_silero_vad()
     data, sr = sf.read(str(wav), dtype="float32")
     assert sr == 16000, f"expected 16k, got {sr}"
@@ -59,7 +80,9 @@ def run_vad(wav: Path) -> list[dict]:
     return [{"start": t["start"] / 16000.0, "end": t["end"] / 16000.0} for t in ts]
 
 
-def derive_silences(speech: list[dict], total_dur: float, min_silence: float) -> tuple[list[dict], list[float]]:
+def derive_silences(
+    speech: list[dict], total_dur: float, min_silence: float
+) -> tuple[list[dict], list[float]]:
     """From speech segments, compute silences between them, then pick midpoint
     of each silence ≥ min_silence as a candidate cut point."""
     silences: list[dict] = []
@@ -70,7 +93,7 @@ def derive_silences(speech: list[dict], total_dur: float, min_silence: float) ->
         silences.append(sil)
         candidates.append(sil["end"] - 0.1)  # snap right before speech starts
     # Between segments
-    for a, b in zip(speech, speech[1:]):
+    for a, b in zip(speech, speech[1:], strict=False):
         dur = b["start"] - a["end"]
         if dur >= min_silence:
             sil = {"start": a["end"], "end": b["start"], "duration": dur}
@@ -79,8 +102,11 @@ def derive_silences(speech: list[dict], total_dur: float, min_silence: float) ->
             candidates.append(a["end"] + 0.15)
     # Post-roll silence
     if speech and total_dur - speech[-1]["end"] > min_silence:
-        sil = {"start": speech[-1]["end"], "end": total_dur,
-               "duration": total_dur - speech[-1]["end"]}
+        sil = {
+            "start": speech[-1]["end"],
+            "end": total_dur,
+            "duration": total_dur - speech[-1]["end"],
+        }
         silences.append(sil)
         candidates.append(speech[-1]["end"] + 0.15)
     return silences, candidates
@@ -89,8 +115,12 @@ def derive_silences(speech: list[dict], total_dur: float, min_silence: float) ->
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("slug")
-    ap.add_argument("--min-silence", type=float, default=0.5,
-                    help="silences shorter than this are not cut candidates")
+    ap.add_argument(
+        "--min-silence",
+        type=float,
+        default=0.5,
+        help="silences shorter than this are not cut candidates",
+    )
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
 
@@ -98,7 +128,10 @@ def main() -> None:
     src = msg_dir / "source.mp4"
     out = msg_dir / "vad.json"
     if not src.exists():
-        sys.exit(f"source not found: {src}")
+        fail(
+            f"source não encontrado: {src}",
+            hint=f"rode primeiro: ./scripts/pipeline.sh <url-ou-mp4>  (ou: 01_ingest.py <src> --slug {args.slug})",
+        )
     if out.exists() and not args.force:
         print(json.dumps({"ok": True, "skipped": True, "path": str(out)}))
         return
@@ -110,7 +143,7 @@ def main() -> None:
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
         wav = Path(tmp.name)
     try:
-        print(f"[1/2] extracting mono16k WAV for VAD...", file=sys.stderr)
+        print("[1/2] extracting mono16k WAV for VAD...", file=sys.stderr)
         extract_wav_16k(src, wav)
         print(f"[2/2] running silero-vad on {total_dur:.1f}s audio...", file=sys.stderr)
         speech = run_vad(wav)
@@ -119,6 +152,7 @@ def main() -> None:
 
     silences, candidates = derive_silences(speech, total_dur, args.min_silence)
     payload = {
+        "_schema_version": SCHEMA_VERSION,
         "speech": speech,
         "silences": silences,
         "candidate_cut_points": candidates,
@@ -126,13 +160,18 @@ def main() -> None:
         "total_duration_s": total_dur,
     }
     out.write_text(json.dumps(payload, indent=2))
-    print(json.dumps({
-        "ok": True,
-        "path": str(out),
-        "n_speech_segments": len(speech),
-        "n_silences": len(silences),
-        "n_candidate_cuts": len(candidates),
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "path": str(out),
+                "n_speech_segments": len(speech),
+                "n_silences": len(silences),
+                "n_candidate_cuts": len(candidates),
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

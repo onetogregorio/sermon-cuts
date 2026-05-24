@@ -17,9 +17,13 @@ Reads:
 Writes:
     memory/messages/<slug>/srts/NN-slug.srt
 """
+
 from __future__ import annotations
-import argparse, json, sys
+
+import argparse
+import json
 from pathlib import Path
+
 import yaml
 
 SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
@@ -32,7 +36,8 @@ MAX_CHARS = SUB_CFG["max_chars"]
 PUNCT_BREAK = set(".!?")
 SOFT_BREAK = set(",;:")
 FUNC = set(
-    w for line in (SKILL_ROOT / "config/function_words_pt.txt").read_text().splitlines()
+    w
+    for line in (SKILL_ROOT / "config/function_words_pt.txt").read_text().splitlines()
     if line.strip() and not line.startswith("#")
     for w in line.split()
 )
@@ -58,9 +63,12 @@ def _chunk_chars(chunk: list[dict]) -> int:
     return sum(len((w.get("text") or "").strip()) for w in chunk) + max(0, len(chunk) - 1)
 
 
-def build_srt(words: list[dict], seg_start: float, seg_end: float) -> list[tuple[float, float, str]]:
+def build_srt(
+    words: list[dict], seg_start: float, seg_end: float
+) -> list[tuple[float, float, str]]:
     in_range = [
-        w for w in words
+        w
+        for w in words
         if w.get("type") == "word"
         and w.get("start") is not None
         and w.get("end") is not None
@@ -96,7 +104,7 @@ def build_srt(words: list[dict], seg_start: float, seg_end: float) -> list[tuple
 
     # Function-word shift (keep last chunk intact — don't shift its trailing function word)
     for i in range(len(chunks) - 2):
-        while chunks[i] and _is_function((chunks[i][-1].get("text") or "")):
+        while chunks[i] and _is_function(chunks[i][-1].get("text") or ""):
             if len(chunks[i]) <= 2:
                 break
             shifted_text = (chunks[i][-1].get("text") or "").strip()
@@ -153,13 +161,19 @@ def main() -> None:
     out = srts_dir / f"{n:02d}-{slug}.srt"
     entries = build_srt(transcript["words"], seg_start, seg_end)
     write_srt(entries, out)
-    print(json.dumps({
-        "ok": True,
-        "path": str(out),
-        "n_cues": len(entries),
-        "duration_s": round(seg_end - seg_start, 2),
-        "last_cue_text": entries[-1][2] if entries else "",
-    }, indent=2, ensure_ascii=False))
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "path": str(out),
+                "n_cues": len(entries),
+                "duration_s": round(seg_end - seg_start, 2),
+                "last_cue_text": entries[-1][2] if entries else "",
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+    )
 
 
 if __name__ == "__main__":

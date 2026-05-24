@@ -31,8 +31,14 @@ jobs:
       - name: Compile-check all Python scripts
         run: python -m compileall -q scripts/
 
-      - name: Install yamllint
-        run: pip install yamllint
+      - name: Install lint tools
+        run: pip install yamllint ruff
+
+      - name: ruff check
+        run: ruff check scripts/
+
+      - name: ruff format --check
+        run: ruff format --check scripts/
 
       - name: Validate YAML configs
         run: yamllint -d relaxed config/ .github/

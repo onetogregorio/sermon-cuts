@@ -2,6 +2,7 @@
 # Orchestrator for sermon-cuts skill.
 #
 # Modes:
+#   pipeline.sh doctor                         # health-check the environment
 #   pipeline.sh <source>                       # ingest + transcribe + vad + propose
 #   pipeline.sh --propose-only <source>        # same as above (just clarity)
 #   pipeline.sh --render-cut N --slug S        # render cut N for slug S
@@ -21,6 +22,11 @@ usage() {
 }
 
 [[ $# -eq 0 ]] && usage
+
+# Short-circuit subcommands that don't need arg parsing.
+case "${1:-}" in
+  doctor)  exec $PY "$SCRIPTS/doctor.py" ;;
+esac
 
 MODE="ingest_propose"
 SOURCE=""

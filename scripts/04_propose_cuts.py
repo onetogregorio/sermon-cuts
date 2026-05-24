@@ -19,9 +19,16 @@ Prints:
 The agent then writes the proposed cuts to:
     memory/messages/<slug>/cuts_proposed.json
 """
+
 from __future__ import annotations
-import argparse, json, sys
+
+import argparse
+import json
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import SCHEMA_VERSION
 
 SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
 MESSAGES = SKILL_ROOT / "memory/messages"
@@ -62,6 +69,7 @@ def main() -> None:
 
     compact_transcript = words_to_text_with_timestamps(transcript["words"])
     combined = {
+        "_schema_version": SCHEMA_VERSION,
         "slug": args.slug,
         "duration_s": vad.get("total_duration_s", 0),
         "transcript_compact": compact_transcript,
@@ -71,17 +79,23 @@ def main() -> None:
     out = msg_dir / "propose_input.json"
     out.write_text(json.dumps(combined, indent=2, ensure_ascii=False))
 
-    print(json.dumps({
-        "ok": True,
-        "input_path": str(out),
-        "prompt_path": str(SKILL_ROOT / "prompts/propose_cuts.md"),
-        "expected_output_path": str(msg_dir / "cuts_proposed.json"),
-        "instructions": (
-            "Now read the prompt at prompt_path and the input at "
-            "input_path, then write JSON array of cut proposals to "
-            "expected_output_path."
-        ),
-    }, indent=2, ensure_ascii=False))
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "input_path": str(out),
+                "prompt_path": str(SKILL_ROOT / "prompts/propose_cuts.md"),
+                "expected_output_path": str(msg_dir / "cuts_proposed.json"),
+                "instructions": (
+                    "Now read the prompt at prompt_path and the input at "
+                    "input_path, then write JSON array of cut proposals to "
+                    "expected_output_path."
+                ),
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+    )
 
 
 if __name__ == "__main__":

@@ -21,10 +21,18 @@ Output:
            reason, last_word, ending_punct}
 If --write-back: updates cuts_proposed.json in place.
 """
+
 from __future__ import annotations
-import argparse, json, sys
+
+import argparse
+import json
+import sys
 from pathlib import Path
+
 import yaml
+
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import fail
 
 SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
 MESSAGES = SKILL_ROOT / "memory/messages"
@@ -69,7 +77,11 @@ def main() -> None:
     candidates = sorted(vad["candidate_cut_points"])
 
     if args.cut_index < 1 or args.cut_index > len(cuts):
-        sys.exit(f"cut_index {args.cut_index} out of range (1..{len(cuts)})")
+        fail(
+            f"cut_index {args.cut_index} fora do range",
+            hint=f"esse slug tem {len(cuts)} cortes propostos (1..{len(cuts)}). "
+            f"Cheque cuts_proposed.json em memory/messages/{args.slug}/",
+        )
     cut = cuts[args.cut_index - 1]
     orig_start, orig_end = float(cut["start"]), float(cut["end"])
 
@@ -85,7 +97,9 @@ def main() -> None:
             if c <= orig_end:
                 continue
             if c - orig_end > args.max_extend_s:
-                reason = f"could not extend within {args.max_extend_s}s; last word still '{last_text}'"
+                reason = (
+                    f"could not extend within {args.max_extend_s}s; last word still '{last_text}'"
+                )
                 break
             new_last = find_last_word(words, c)
             if new_last and not is_forbidden_ending(new_last.get("text") or ""):
@@ -108,7 +122,9 @@ def main() -> None:
         nearest_prior_candidate = max(prev_cands)
 
     last_text_clean = (last_text or "").strip()
-    ending_punct = last_text_clean[-1] if last_text_clean and last_text_clean[-1] in ".!?,;:" else ""
+    ending_punct = (
+        last_text_clean[-1] if last_text_clean and last_text_clean[-1] in ".!?,;:" else ""
+    )
 
     result = {
         "ok": not is_forbidden_ending(last_text),
@@ -129,8 +145,7 @@ def main() -> None:
         cut["duration_s"] = round(adj_end - adj_start, 2)
         cut["ending_word"] = last_text_clean
         cut["ending_punctuation"] = ending_punct
-        (msg_dir / "cuts_proposed.json").write_text(
-            json.dumps(cuts, indent=2, ensure_ascii=False))
+        (msg_dir / "cuts_proposed.json").write_text(json.dumps(cuts, indent=2, ensure_ascii=False))
         result["written_back"] = True
 
     print(json.dumps(result, indent=2, ensure_ascii=False))

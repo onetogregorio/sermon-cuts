@@ -1,0 +1,27 @@
+# Sermon Cuts — ruff config
+# Goal: catch obvious bugs and keep style consistent, without fighting the
+# project's deliberate compact style (e.g. multi-import lines, short helper
+# names like `_red`/`_yel`).
+
+target-version = "py312"
+line-length = 100
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes (unused imports, undefined names)
+    "W",   # pycodestyle warnings
+    "I",   # isort (import ordering)
+    "B",   # bugbear (likely bugs)
+    "UP",  # pyupgrade (modern syntax)
+]
+ignore = [
+    "E402",  # module-level import not at top — we use sys.path.insert before importing _common
+    "E501",  # line too long — we cap at 100 but tolerate longer lines in URLs/log strings
+    "E701",  # multiple statements on one line (colon) — we use compact one-liners deliberately
+    "B008",  # function call in default — argparse / Path() defaults are common
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"

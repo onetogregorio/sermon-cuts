@@ -27,13 +27,22 @@ Output schema (same shape for both providers):
   "_provider": "youtube-vtt" | "groq-whisper-large-v3"
 }
 """
+
 from __future__ import annotations
-import argparse, json, os, re, subprocess, sys, tempfile
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
+
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import resolve_ffmpeg
+from _common import SCHEMA_VERSION, fail, resolve_ffmpeg
 
 SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
 MESSAGES = SKILL_ROOT / "memory/messages"
@@ -44,8 +53,7 @@ FFMPEG = resolve_ffmpeg(CFG.get("ffmpeg_bin"))
 def load_env() -> None:
     if os.environ.get("GROQ_API_KEY"):
         return
-    for env_path in (Path.home() / ".env", Path.cwd() / ".env",
-                     Path.cwd() / "edit/.env"):
+    for env_path in (Path.home() / ".env", Path.cwd() / ".env", Path.cwd() / "edit/.env"):
         if env_path.exists():
             for line in env_path.read_text().splitlines():
                 line = line.strip()
@@ -79,7 +87,7 @@ def _parse_vtt_cue(cue_start: float, cue_end: float, text: str) -> list[dict]:
     last_pos = 0
     last_ts = cue_start
     for m in INLINE_TS_RE.finditer(text):
-        chunks.append((last_ts, text[last_pos:m.start()]))
+        chunks.append((last_ts, text[last_pos : m.start()]))
         last_ts = _ts_to_seconds(m.group(1))
         last_pos = m.end()
     chunks.append((last_ts, text[last_pos:]))
@@ -95,11 +103,13 @@ def _parse_vtt_cue(cue_start: float, cue_end: float, text: str) -> list[dict]:
         else:
             dur = max(0.01, end - start) / len(words)
             for j, w in enumerate(words):
-                out.append({
-                    "start": start + j * dur,
-                    "end": start + (j + 1) * dur,
-                    "text": w,
-                })
+                out.append(
+                    {
+                        "start": start + j * dur,
+                        "end": start + (j + 1) * dur,
+                        "text": w,
+                    }
+                )
     return out
 
 
@@ -121,7 +131,7 @@ def _parse_vtt_file(vtt_path: Path) -> list[dict]:
             continue
         start = _ts_to_seconds(m.group(1))
         end = _ts_to_seconds(m.group(2))
-        body_lines = [l for l in raw_lines[timing_idx + 1:] if INLINE_TS_RE.search(l)]
+        body_lines = [ln for ln in raw_lines[timing_idx + 1 :] if INLINE_TS_RE.search(ln)]
         if not body_lines:
             continue
         body = "\n".join(body_lines)
@@ -140,16 +150,23 @@ def _parse_vtt_file(vtt_path: Path) -> list[dict]:
 
 def transcribe_youtube(url: str, language: str, work_dir: Path) -> dict:
     out_template = str(work_dir / "subs.%(ext)s")
-    subprocess.run([
-        "yt-dlp",
-        "--write-auto-subs",
-        "--sub-langs", f"{language}.*,{language}",
-        "--sub-format", "vtt",
-        "--skip-download",
-        "--no-warnings",
-        "-o", out_template,
-        url,
-    ], check=True, stderr=subprocess.PIPE)
+    subprocess.run(
+        [
+            "yt-dlp",
+            "--write-auto-subs",
+            "--sub-langs",
+            f"{language}.*,{language}",
+            "--sub-format",
+            "vtt",
+            "--skip-download",
+            "--no-warnings",
+            "-o",
+            out_template,
+            url,
+        ],
+        check=True,
+        stderr=subprocess.PIPE,
+    )
     vtt_candidates = sorted(work_dir.glob("*.vtt"))
     if not vtt_candidates:
         raise RuntimeError(f"no VTT auto-captions returned by yt-dlp for {url}")
@@ -165,23 +182,43 @@ def transcribe_youtube(url: str, language: str, work_dir: Path) -> dict:
 
 # ─── Groq provider ─────────────────────────────────────────────────────────
 
+
 def _extract_audio(src: Path, out: Path) -> None:
-    subprocess.run([
-        FFMPEG, "-y", "-i", str(src),
-        "-ac", "1", "-ar", "16000", "-vn",
-        "-c:a", "pcm_s16le", str(out),
-    ], check=True, stderr=subprocess.DEVNULL)
+    subprocess.run(
+        [
+            FFMPEG,
+            "-y",
+            "-i",
+            str(src),
+            "-ac",
+            "1",
+            "-ar",
+            "16000",
+            "-vn",
+            "-c:a",
+            "pcm_s16le",
+            str(out),
+        ],
+        check=True,
+        stderr=subprocess.DEVNULL,
+    )
 
 
 def transcribe_groq(src: Path, language: str) -> dict:
     load_env()
     if not os.environ.get("GROQ_API_KEY"):
-        sys.exit("GROQ_API_KEY not set (put in ~/.env or set via env)")
+        fail(
+            "GROQ_API_KEY não configurada",
+            hint="adicione `GROQ_API_KEY=gsk_...` no ~/.env ou exporte no shell. "
+            "Alternativa: use --provider=youtube (legendas auto, grátis).",
+            url="https://console.groq.com/keys",
+        )
     from groq import Groq
+
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
         wav = Path(tmp.name)
     try:
-        print(f"  extracting mono16k audio...", file=sys.stderr)
+        print("  extracting mono16k audio...", file=sys.stderr)
         _extract_audio(src, wav)
         size_mb = wav.stat().st_size / 1e6
         print(f"  sending to Groq Whisper-large-v3 ({size_mb:.1f} MB)...", file=sys.stderr)
@@ -198,10 +235,13 @@ def transcribe_groq(src: Path, language: str) -> dict:
         wav.unlink(missing_ok=True)
     raw = resp.model_dump() if hasattr(resp, "model_dump") else dict(resp)
     raw_words = [
-        {"start": float(w.get("start") or 0),
-         "end": float(w.get("end") or w.get("start") or 0),
-         "text": (w.get("word") or w.get("text") or "").strip()}
-        for w in raw.get("words", []) if (w.get("word") or w.get("text"))
+        {
+            "start": float(w.get("start") or 0),
+            "end": float(w.get("end") or w.get("start") or 0),
+            "text": (w.get("word") or w.get("text") or "").strip(),
+        }
+        for w in raw.get("words", [])
+        if (w.get("word") or w.get("text"))
     ]
     return {
         "words": _to_scribe_shape(raw_words),
@@ -211,6 +251,7 @@ def transcribe_groq(src: Path, language: str) -> dict:
 
 
 # ─── shared post-processing ────────────────────────────────────────────────
+
 
 def _to_scribe_shape(raw_words: list[dict]) -> list[dict]:
     out: list[dict] = []
@@ -230,6 +271,7 @@ def _to_scribe_shape(raw_words: list[dict]) -> list[dict]:
 
 # ─── main ──────────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("slug")
@@ -242,7 +284,10 @@ def main() -> None:
     src = msg_dir / "source.mp4"
     out = msg_dir / "transcript.json"
     if not src.exists():
-        sys.exit(f"source not found: {src} (run 01_ingest.py first)")
+        fail(
+            f"source não encontrado: {src}",
+            hint=f"rode primeiro: ./scripts/pipeline.sh <url-ou-mp4>  (ou: 01_ingest.py <src> --slug {args.slug})",
+        )
     if out.exists() and not args.force:
         print(json.dumps({"ok": True, "skipped": True, "path": str(out)}, indent=2))
         return
@@ -251,22 +296,31 @@ def main() -> None:
 
     if args.provider == "youtube":
         if meta.get("source_type") != "youtube" or not meta.get("url"):
-            sys.exit("--provider=youtube requires the source to be a YouTube URL "
-                     "(ingest with yt-dlp). For local files, use --provider=groq.")
+            fail(
+                "--provider=youtube precisa de um source vindo do YouTube",
+                hint="esse slug foi ingerido de arquivo local. Use --provider=groq "
+                "(requer GROQ_API_KEY) ou --provider=local (offline com faster-whisper).",
+            )
         with tempfile.TemporaryDirectory() as td:
             payload = transcribe_youtube(meta["url"], args.language, Path(td))
     else:
         payload = transcribe_groq(src, args.language)
 
+    payload["_schema_version"] = SCHEMA_VERSION
     out.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
     n_words = sum(1 for w in payload["words"] if w.get("type") == "word")
-    print(json.dumps({
-        "ok": True,
-        "path": str(out),
-        "n_words": n_words,
-        "language": payload["language"],
-        "provider": payload["_provider"],
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "path": str(out),
+                "n_words": n_words,
+                "language": payload["language"],
+                "provider": payload["_provider"],
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

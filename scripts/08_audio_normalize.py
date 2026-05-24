@@ -25,13 +25,20 @@ Writes:
     memory/messages/<slug>/renders/NN-slug.normalized.mp4
     (or overwrites NN-slug.mp4 if --in-place)
 """
+
 from __future__ import annotations
-import argparse, json, re, subprocess, sys, tempfile
+
+import argparse
+import json
+import re
+import subprocess
+import sys
 from pathlib import Path
+
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import resolve_ffmpeg
+from _common import fail, resolve_ffmpeg
 
 SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
 MESSAGES = SKILL_ROOT / "memory/messages"
@@ -43,23 +50,33 @@ DEFAULT_TRUE_PEAK = -1.5  # dBTP — safe headroom for Insta/TikTok/Reels
 
 def _loudnorm_pass1_measure(src: Path, target_lufs: float, tp_db: float) -> dict:
     """Pass 1: measure integrated loudness + true peak. Returns ffmpeg stats."""
-    proc = subprocess.run([
-        FFMPEG, "-y", "-i", str(src),
-        "-af", f"loudnorm=I={target_lufs}:TP={tp_db}:LRA=11:print_format=json",
-        "-f", "null", "-",
-    ], capture_output=True, text=True)
+    proc = subprocess.run(
+        [
+            FFMPEG,
+            "-y",
+            "-i",
+            str(src),
+            "-af",
+            f"loudnorm=I={target_lufs}:TP={tp_db}:LRA=11:print_format=json",
+            "-f",
+            "null",
+            "-",
+        ],
+        capture_output=True,
+        text=True,
+    )
     # loudnorm prints its JSON stats to stderr after a leading log block.
     m = re.search(r'\{[^{}]*"input_i"[^{}]*\}', proc.stderr, re.DOTALL)
     if not m:
         raise RuntimeError(
-            f"loudnorm pass 1 failed to emit stats. ffmpeg stderr tail:\n"
-            f"{proc.stderr[-800:]}"
+            f"loudnorm pass 1 failed to emit stats. ffmpeg stderr tail:\n{proc.stderr[-800:]}"
         )
     return json.loads(m.group(0))
 
 
-def _loudnorm_pass2_apply(src: Path, dst: Path, target_lufs: float,
-                          tp_db: float, stats: dict) -> None:
+def _loudnorm_pass2_apply(
+    src: Path, dst: Path, target_lufs: float, tp_db: float, stats: dict
+) -> None:
     """Pass 2: apply gain using measured stats, with true-peak limit baked in."""
     af = (
         f"loudnorm=I={target_lufs}:TP={tp_db}:LRA=11:"
@@ -70,15 +87,31 @@ def _loudnorm_pass2_apply(src: Path, dst: Path, target_lufs: float,
         f"offset={stats['target_offset']}:"
         f"linear=true:print_format=summary"
     )
-    subprocess.run([
-        FFMPEG, "-y", "-i", str(src),
-        "-map", "0:v", "-map", "0:a",
-        "-c:v", "copy",
-        "-c:a", "aac", "-b:a", "192k",
-        "-af", af,
-        "-movflags", "+faststart",
-        str(dst),
-    ], check=True, capture_output=True)
+    subprocess.run(
+        [
+            FFMPEG,
+            "-y",
+            "-i",
+            str(src),
+            "-map",
+            "0:v",
+            "-map",
+            "0:a",
+            "-c:v",
+            "copy",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "192k",
+            "-af",
+            af,
+            "-movflags",
+            "+faststart",
+            str(dst),
+        ],
+        check=True,
+        capture_output=True,
+    )
 
 
 def main() -> None:
@@ -97,7 +130,10 @@ def main() -> None:
     slug = cut["slug"]
     src = msg_dir / "renders" / f"{n:02d}-{slug}.mp4"
     if not src.exists():
-        sys.exit(f"render not found: {src}")
+        fail(
+            f"render não encontrado: {src}",
+            hint=f"rode primeiro: ./scripts/07_render_track.py {args.slug} {args.cut_index}",
+        )
     final = src.with_name(f"{n:02d}-{slug}.normalized.mp4")
 
     stats = _loudnorm_pass1_measure(src, args.target_lufs, args.true_peak_db)
@@ -107,16 +143,21 @@ def main() -> None:
         final.replace(src)
         final = src
 
-    print(json.dumps({
-        "ok": True,
-        "path": str(final),
-        "size_mb": round(final.stat().st_size / (1024 * 1024), 1),
-        "target_lufs": args.target_lufs,
-        "true_peak_db": args.true_peak_db,
-        "measured_input_i": float(stats["input_i"]),
-        "measured_input_tp": float(stats["input_tp"]),
-        "measured_input_lra": float(stats["input_lra"]),
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "path": str(final),
+                "size_mb": round(final.stat().st_size / (1024 * 1024), 1),
+                "target_lufs": args.target_lufs,
+                "true_peak_db": args.true_peak_db,
+                "measured_input_i": float(stats["input_i"]),
+                "measured_input_tp": float(stats["input_tp"]),
+                "measured_input_lra": float(stats["input_lra"]),
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":
