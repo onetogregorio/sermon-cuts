@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sermon Cuts — turn long preaching videos into vertical clips, automatically</title>
+  <meta name="description" content="Open-source AI skill for Claude Code, Cursor, and other AI editors. Paste a sermon URL, get publish-ready vertical clips with face tracking, branded subtitles, and balanced audio." />
+  <meta property="og:title" content="Sermon Cuts" />
+  <meta property="og:description" content="Turn long sermons into vertical Reels/Shorts/TikToks in minutes. Open-source. Built for pastors and faith content creators." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://onetogregorio.github.io/sermon-cuts/" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a href="./" class="logo">
+      <span class="logo-mark">✦</span>
+      <span class="logo-text">Sermon Cuts</span>
+    </a>
+    <nav class="nav">
+      <a href="#install">Install</a>
+      <a href="#demo">Demo</a>
+      <a href="#features">Features</a>
+      <a href="#sponsors">Sponsors</a>
+      <a href="https://github.com/onetogregorio/sermon-cuts" class="gh">★ GitHub</a>
+    </nav>
+    <div class="lang-switch">
+      <a href="./" class="active">EN</a>
+      <a href="./pt/">PT</a>
+      <a href="./es/">ES</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="kicker">Open-source · MIT · For pastors &amp; faith creators</p>
+          <h1>
+            Cut your <span class="gold">30-minute sermon</span><br />
+            into 10 vertical clips.<br />
+            In one prompt.
+          </h1>
+          <p class="lede">
+            Paste a YouTube link to your sermon. Your AI editor handles the
+            transcription, picks the 10 strongest moments, reframes them
+            vertically with face tracking, adds your brand subtitles, and
+            balances the audio. You only step in to pick which ones ship.
+          </p>
+          <div class="cta-row">
+            <a href="#install" class="btn btn-primary">Install in one prompt</a>
+            <a href="https://github.com/onetogregorio/sermon-cuts" class="btn btn-ghost">View on GitHub →</a>
+          </div>
+          <p class="micro">
+            Works with Claude Code, Cursor, Codex, Cline, Aider, and any AI
+            editor that can run shell scripts.
+          </p>
+        </div>
+        <div class="hero-demo">
+          <div class="phone-frame">
+            <video autoplay muted loop playsinline preload="metadata" poster="">
+              <source src="./assets/demo.mp4" type="video/mp4" />
+            </video>
+          </div>
+          <p class="demo-caption">
+            Real output. 37 seconds, 1080×1920, gold subtitles burned in,
+            audio at -14 LUFS — ready to upload to Reels.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="install" class="install">
+      <div class="container">
+        <p class="kicker">The one-prompt install</p>
+        <h2>Don't read install docs. <span class="gold">Paste this.</span></h2>
+        <p class="section-lede">
+          Open Claude Code, Cursor, Codex, or any AI editor. Paste the prompt
+          below. Answer the questions. Done in under 5 minutes.
+        </p>
+        <div class="code-card">
+          <button class="copy-btn" data-copy="install-prompt">Copy</button>
+          <pre id="install-prompt">Install the Sermon Cuts skill (https://github.com/onetogregorio/sermon-cuts) on this machine. Walk me through these steps and stop if anything fails:
+
+1. Detect my OS (macOS or Linux). On macOS, make sure Homebrew is installed.
+2. Install system deps: ffmpeg (with libass), yt-dlp, Python 3.12+.
+3. Clone the repo to ~/code/sermon-cuts (or ask me where).
+4. Create a Python venv inside the repo and pip install -r requirements.txt.
+5. Symlink scripts/, config/, prompts/ into ~/.claude/skills/sermon-cuts/ and copy SKILL.md there too.
+6. Ask if I want to enable better transcription via Groq Whisper. If yes, open https://console.groq.com/keys, ask me to paste the key, and add GROQ_API_KEY=... to ~/.env.
+7. Ask if I want the brand font Outfit Black (https://fonts.google.com/specimen/Outfit). If yes, download it and install to my user fonts folder.
+8. Run ./scripts/pipeline.sh --help to confirm the skill is wired up.
+9. Tell me a one-line example of how to cut my first sermon.
+
+Report success or the failed step at the end.</pre>
+        </div>
+        <p class="after-prompt">
+          Then just say: <em>"cut this sermon: &lt;YouTube URL&gt;"</em>
+        </p>
+      </div>
+    </section>
+
+    <section id="features" class="features">
+      <div class="container">
+        <p class="kicker">What's in the box</p>
+        <h2>Built for messages that <span class="gold">deserve better</span> than a rushed Sunday night.</h2>
+        <div class="feature-grid">
+          <article class="card">
+            <div class="icon">▶</div>
+            <h3>Smart vertical reframe</h3>
+            <p>MediaPipe face tracking centers the speaker on a 1080×1920 frame
+              with smooth 2.5-second moving-average panning. No jerky cuts.</p>
+          </article>
+          <article class="card">
+            <div class="icon">Aa</div>
+            <h3>Brand-style subtitles</h3>
+            <p>Outfit Black, gold on black, 3-4 words per line, sentence case,
+              positioned above the Reels/TikTok UI bar. No shouting caps.</p>
+          </article>
+          <article class="card">
+            <div class="icon">✦</div>
+            <h3>AI proposes, you pick</h3>
+            <p>Cuts must have a hook, development, and conclusion. Can't end
+              on <em>"porque…"</em> or <em>"but…"</em>. Ranked by narrative arc.</p>
+          </article>
+          <article class="card">
+            <div class="icon">♪</div>
+            <h3>Loudness-balanced audio</h3>
+            <p>pyloudnorm two-pass to -14 LUFS — the Instagram and TikTok
+              standard. Your sermon sounds right on every platform.</p>
+          </article>
+          <article class="card">
+            <div class="icon">⌘</div>
+            <h3>One command end-to-end</h3>
+            <p><code>./scripts/pipeline.sh &lt;url&gt;</code> handles ingest,
+              transcription, VAD pause detection, and renders cleanly.</p>
+          </article>
+          <article class="card">
+            <div class="icon">⌥</div>
+            <h3>Yours to customize</h3>
+            <p>Edit two files (<code>force_style.txt</code>, <code>render_defaults.yaml</code>)
+              and the whole pipeline takes on your brand colors and font.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo" class="how">
+      <div class="container">
+        <p class="kicker">How it works</p>
+        <h2>Four steps. <span class="gold">Under 10 minutes</span> from URL to upload.</h2>
+        <ol class="steps">
+          <li>
+            <span class="step-n">1</span>
+            <div>
+              <h3>Drop a URL</h3>
+              <p>YouTube link or a local <code>.mp4</code>. Works on 30 to 60-minute videos.</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-n">2</span>
+            <div>
+              <h3>Pipeline transcribes &amp; analyzes</h3>
+              <p>Word-level transcript (free via YouTube auto-captions or premium via Groq Whisper) + voice-activity boundaries so cuts never split mid-word.</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-n">3</span>
+            <div>
+              <h3>Your AI editor proposes 10 cuts</h3>
+              <p>Each with a theme, hook, development, conclusion, and a coherence score. You pick which to render — typically 5 to 8.</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-n">4</span>
+            <div>
+              <h3>Cuts ship vertically</h3>
+              <p>1080×1920, face-tracked, branded subtitles burned in, audio at -14 LUFS. Drop into Reels/TikTok/Shorts.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="sponsors" class="sponsors">
+      <div class="container">
+        <p class="kicker">Sponsors</p>
+        <h2>Built with support from</h2>
+        <p class="section-lede">
+          Organizations investing in tools that serve the church and faith
+          content creators.
+        </p>
+        <div class="sponsor-grid">
+          <a href="#" class="sponsor-card" data-sponsor="midvash">
+            <div class="sponsor-logo">Midvash</div>
+            <p>TODO: logo + URL</p>
+          </a>
+          <a href="#" class="sponsor-card" data-sponsor="minhaigreja">
+            <div class="sponsor-logo">MinhaIgreja</div>
+            <p>TODO: logo + URL</p>
+          </a>
+        </div>
+        <p class="sponsor-cta">
+          Want to support this project?
+          <a href="https://github.com/sponsors/onetogregorio">Become a sponsor →</a>
+        </p>
+      </div>
+    </section>
+
+    <section class="about">
+      <div class="container about-grid">
+        <div>
+          <p class="kicker">About</p>
+          <h2>Hi, I'm <span class="gold">Neto Gregório</span>.</h2>
+          <p>
+            I build tools at the intersection of faith, creativity, and AI.
+            I made Sermon Cuts because I was tired of spending Sunday nights
+            cutting my own preaching into Reels by hand — and I figured other
+            people preaching, teaching, and creating Christian content might
+            be tired of it too.
+          </p>
+          <p>
+            If this project saves you an evening, I'd love to hear about it.
+          </p>
+        </div>
+        <ul class="about-links">
+          <li><span>Blog</span> <a href="https://netogregorio.com">netogregorio.com</a></li>
+          <li><span>Instagram</span> <a href="https://instagram.com/onetogregorio">@onetogregorio</a></li>
+          <li><span>GitHub</span> <a href="https://github.com/onetogregorio">@onetogregorio</a></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <p>
+        Sermon Cuts · MIT licensed · Built with
+        <a href="https://claude.com/claude-code">Claude Code</a>
+      </p>
+      <p class="lang-foot">
+        <a href="./" class="active">English</a> ·
+        <a href="./pt/">Português</a> ·
+        <a href="./es/">Español</a>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.copy-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const target = document.getElementById(btn.dataset.copy);
+        if (!target) return;
+        await navigator.clipboard.writeText(target.innerText);
+        const old = btn.innerText;
+        btn.innerText = 'Copied ✓';
+        setTimeout(() => (btn.innerText = old), 1500);
+      });
+    });
+  </script>
+</body>
+</html>

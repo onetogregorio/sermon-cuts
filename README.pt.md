@@ -64,7 +64,41 @@ leia um `SKILL.md` e rode scripts.
 
 ---
 
-## Início rápido
+## Instalar com um prompt só 🪄
+
+Não quer ler documentação de instalação? Cola esse prompt no **Claude Code**,
+**Cursor**, **Codex**, **Cline**, **Aider** — qualquer agente de IA com acesso
+ao terminal — e ele instala tudo pra você.
+
+> Instala a skill **Sermon Cuts** (https://github.com/onetogregorio/sermon-cuts)
+> na minha máquina. Me guia pelos passos abaixo e para se algum falhar:
+>
+> 1. Detecta meu sistema (macOS ou Linux). No macOS, garante que o Homebrew
+>    está instalado.
+> 2. Instala as dependências de sistema: `ffmpeg` (com libass), `yt-dlp`,
+>    Python 3.12+.
+> 3. Clona o repo pra `~/code/sermon-cuts` (ou me pergunta onde colocar).
+> 4. Cria um venv Python dentro do repo e roda `pip install -r requirements.txt`.
+> 5. Symlinka `scripts/`, `config/`, `prompts/` pra `~/.claude/skills/sermon-cuts/`
+>    e copia o `SKILL.md` pra lá também.
+> 6. Me pergunta se quero transcrição melhor via Groq Whisper. Se sim,
+>    abre https://console.groq.com/keys, pede pra eu colar a chave e adiciona
+>    `GROQ_API_KEY=...` no `~/.env`.
+> 7. Me pergunta se quero a fonte da marca Outfit Black
+>    (https://fonts.google.com/specimen/Outfit). Se sim, baixa e instala
+>    na minha pasta de fontes.
+> 8. Roda `./scripts/pipeline.sh --help` pra confirmar que a skill está pronta.
+> 9. Me dá um exemplo de uma linha de como cortar meu primeiro sermão.
+>
+> Reporta sucesso ou o passo que falhou no final.
+
+Pronto. Agora é só falar *"corta essa pregação: <URL do YouTube>"* pro mesmo agente.
+
+---
+
+## Início rápido (manual)
+
+Se preferir rodar na mão:
 
 ```bash
 # 1. Baixa + transcreve + acha as pausas naturais  (~1 min num sermão de 30min)
@@ -146,6 +180,22 @@ O estilo padrão é o look dourado-no-preto usado no conteúdo do
 Confere [`examples/`](examples/) pra dois case studies completos — os cortes
 propostos, as decisões de curadoria, e os outputs verticais finais prontos
 pra publicar.
+
+Ou visita a [landing page do projeto](https://onetogregorio.github.io/sermon-cuts/pt/) →
+
+---
+
+## Patrocinadores
+
+Construído com apoio de organizações investindo em ferramentas que servem a
+igreja e os criadores de conteúdo cristão.
+
+<!-- SPONSORS:START -->
+- **Midvash** — _TODO: URL + descrição curta_
+- **MinhaIgreja** — _TODO: URL + descrição curta_
+<!-- SPONSORS:END -->
+
+Quer apoiar esse projeto? [Seja patrocinador →](https://github.com/sponsors/onetogregorio)
 
 ---
 

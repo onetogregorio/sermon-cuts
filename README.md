@@ -64,7 +64,38 @@ can read a `SKILL.md` and run shell scripts.
 
 ---
 
-## Quick start
+## Install with one prompt 🪄
+
+Don't want to read install docs? Paste this prompt into **Claude Code**,
+**Cursor**, **Codex**, **Cline**, **Aider** — any AI coding agent with shell
+access — and it'll install the whole thing for you.
+
+> Install the **Sermon Cuts** skill (https://github.com/onetogregorio/sermon-cuts)
+> on this machine. Walk me through these steps and stop if anything fails:
+>
+> 1. Detect my OS (macOS or Linux). On macOS, make sure Homebrew is installed.
+> 2. Install system deps: `ffmpeg` (with libass), `yt-dlp`, Python 3.12+.
+> 3. Clone the repo to `~/code/sermon-cuts` (or ask me where).
+> 4. Create a Python venv inside the repo and `pip install -r requirements.txt`.
+> 5. Symlink `scripts/`, `config/`, `prompts/` into `~/.claude/skills/sermon-cuts/`
+>    and copy `SKILL.md` there too.
+> 6. Ask if I want to enable better transcription via Groq Whisper. If yes,
+>    open https://console.groq.com/keys, ask me to paste the key, and add
+>    `GROQ_API_KEY=...` to `~/.env`.
+> 7. Ask if I want the brand font Outfit Black (https://fonts.google.com/specimen/Outfit).
+>    If yes, download it and install to my user fonts folder.
+> 8. Run `./scripts/pipeline.sh --help` to confirm the skill is wired up.
+> 9. Tell me a one-line example of how to cut my first sermon.
+>
+> Report success or the failed step at the end.
+
+That's it. Next, just say *"cut this sermon: <YouTube URL>"* to the same agent.
+
+---
+
+## Quick start (manual)
+
+If you'd rather run it yourself:
 
 ```bash
 # 1. Ingest + transcribe + find natural cut boundaries  (~1 min for a 30min sermon)
@@ -146,6 +177,22 @@ to change.
 
 Check [`examples/`](examples/) for two full case studies — the cuts proposed,
 the curation decisions made, and the final vertical outputs ready to publish.
+
+Or visit the [project landing page](https://onetogregorio.github.io/sermon-cuts/) →
+
+---
+
+## Sponsors
+
+Built with support from organizations investing in tools that serve the church
+and faith content creators.
+
+<!-- SPONSORS:START -->
+- **Midvash** — _TODO: URL + short description_
+- **MinhaIgreja** — _TODO: URL + short description_
+<!-- SPONSORS:END -->
+
+Want to support this project? [Become a sponsor →](https://github.com/sponsors/onetogregorio)
 
 ---
 
