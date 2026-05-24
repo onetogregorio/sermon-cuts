@@ -437,6 +437,70 @@ def detect_forbidden_ending(cues: list[dict]) -> list[dict]:
     return suspects
 
 
+def _srt_tc_to_s(tc: str) -> float:
+    """Parse ``HH:MM:SS,mmm`` to seconds. Tolerant of comma or dot separator."""
+    tc = tc.replace(",", ".")
+    h, m, s = tc.split(":")
+    return int(h) * 3600 + int(m) * 60 + float(s)
+
+
+def detect_semantic_gap(
+    cues: list[dict],
+    *,
+    min_gap_s: float = 2.0,
+    max_words: int = 3,
+) -> list[dict]:
+    """Flag cues where the duration is suspiciously long for the word count.
+
+    Rationale: YouTube auto-captions sometimes drop a word entirely at a
+    sentence boundary, leaving the surrounding cue stretched across a long
+    silent gap. We saw this 3 times on the Vinde session — "ficar [parado]
+    e você não vai", "e para [ir] É um ciclo", "a missão nos [cansa] e aí"
+    — all gaps of 1.6–2.4 s sitting under ≤3 captured words.
+
+    Heuristic: if ``cue_duration > min_gap_s`` AND ``word_count ≤ max_words``,
+    something probably went missing in the transcription. Pure flag — the
+    fix needs a human (or the LLM review pass) to listen to the audio and
+    decide what word to insert, so we never auto-apply.
+    """
+    suspects: list[dict] = []
+    for cue in cues:
+        try:
+            start = _srt_tc_to_s(cue["tc_start"])
+            end = _srt_tc_to_s(cue["tc_end"])
+        except (ValueError, KeyError):
+            continue
+        duration = end - start
+        if duration < min_gap_s:
+            continue
+        text_clean = cue["text"].strip()
+        word_count = len(text_clean.split())
+        if word_count == 0 or word_count > max_words:
+            continue
+        # Skip cues that close a sentence (.!?) — those are intentional
+        # dramatic pauses by the speaker, not dropped words. Real dropped
+        # words leave a stretched mid-thought cue without terminal punctuation.
+        if text_clean.rstrip('"').endswith((".", "!", "?")):
+            continue
+        suspects.append(
+            {
+                "cue": cue["n"],
+                "tc": cue["tc_start"],
+                "text": cue["text"],
+                "pattern": "semantic_gap",
+                "matched": f"{duration:.1f}s / {word_count}w",
+                "suggestion": (
+                    f"(cue tem {duration:.1f}s mas só {word_count} palavra(s) "
+                    "e não fecha frase — YouTube provavelmente dropou palavra; "
+                    "revise o áudio)"
+                ),
+                "confidence": 0.70,
+                "applied": False,
+            }
+        )
+    return suspects
+
+
 def apply_corrections_dict(cues: list[dict], dict_path: Path) -> list[dict]:
     """Read ``wrong=right`` pairs and apply them in place, recording each
     application as an already-``applied: true`` suspect for the report."""
@@ -759,6 +823,7 @@ def main() -> None:
     rule_suspects.extend(detect_dropped_word_boundary(cues))
     rule_suspects.extend(detect_immediate_repetition(cues))
     rule_suspects.extend(detect_forbidden_ending(cues))
+    rule_suspects.extend(detect_semantic_gap(cues))
 
     # Decide the operational mode. Order of preference:
     #   1. explicit flag (--agent-review, --use-llm, --auto-apply, --dry-run)
