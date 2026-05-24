@@ -1,0 +1,37 @@
+# Global PT-BR transcription corrections — auto-applied by 06b_scrub_srt
+#
+# One `wrong=right` pair per line. Empty lines and #-comments are skipped.
+# Whitespace around = is trimmed. Replacement is case-sensitive substring
+# (not whole-word) — be specific to avoid clobbering legitimate text.
+#
+# Per-message overrides go in memory/messages/<slug>/corrections.txt and
+# are applied AFTER this global file (so a per-slug entry wins).
+#
+# When to add an entry here vs in a per-slug file:
+#   - Global = recurring transcriber mistake across multiple sermons
+#     (julgo/jugo, theological terms YouTube mishears the same way).
+#   - Per-slug = one-off (a name, a specific noun the speaker used).
+
+# ─── Theological / Bible vocabulary ──────────────────────────────────────
+# YouTube auto-captions transcribe "jugo" (yoke) as "julgo" (variant
+# spelling with an extra L). Standardize on the dictionary form.
+julgo=jugo
+
+# Some Whisper/VTT models render "Cristo" as "Quisto" when the audio is
+# noisy or the speaker emphasizes the C. Always wrong.
+Quisto=Cristo
+quisto=cristo
+
+# "Espirito" without the acute accent is a common YouTube slip.
+Espirito Santo=Espírito Santo
+espirito santo=Espírito Santo
+
+# ─── Common stem typos ───────────────────────────────────────────────────
+# Cansaço/canseira frequently transcribed as "canira" (missing 'se').
+canira=canseira
+Canira=Canseira
+
+# ─── Concatenations YouTube produces ─────────────────────────────────────
+# "para a" sometimes collapses to "paraa" when the speaker runs the
+# words together. Restore the space.
+paraa =para a

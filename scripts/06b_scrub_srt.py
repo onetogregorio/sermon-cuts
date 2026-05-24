@@ -812,8 +812,15 @@ def main() -> None:
     applied_count = 0
 
     # Pass 1: dictionary corrections — always auto-apply, no prompts.
-    dict_path = Path(args.corrections) if args.corrections else (msg_dir / "corrections.txt")
-    dict_applied = apply_corrections_dict(cues, dict_path)
+    # Global PT pairs (config/corrections_pt.txt) are applied FIRST so the
+    # per-slug file can override or extend them. Both files are optional.
+    from _common import config_dir  # local import — keeps top of file lean
+    global_dict = config_dir() / "corrections_pt.txt"
+    per_slug_dict = (
+        Path(args.corrections) if args.corrections else (msg_dir / "corrections.txt")
+    )
+    dict_applied = apply_corrections_dict(cues, global_dict)
+    dict_applied.extend(apply_corrections_dict(cues, per_slug_dict))
     all_suspects.extend(dict_applied)
     applied_count += len(dict_applied)
 
