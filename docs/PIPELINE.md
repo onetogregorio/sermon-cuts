@@ -282,18 +282,55 @@ Orchestrator:
 
 ## Per-message directory layout
 
-After a complete run:
+The pipeline splits each message across **two visible folders** under the
+repo and **one hidden state folder** under the skill install:
 
 ```
-memory/messages/<slug>/
-├── source.mp4              # symlink or download
-├── meta.json               # URL/title/duration
-├── transcript.json         # word-level with type=word/spacing
-├── vad.json                # speech segments + cut candidates
-├── propose_input.json      # combined input for the LLM
-├── cuts_proposed.json      # LLM output (you curate this)
-├── srts/
-│   └── NN-slug.srt
-└── renders/
-    └── NN-slug.mp4         # final, ready to upload
+<repo>/sources/<slug>/                    # visible — drop or download here
+└── source.mp4                            # YouTube download OR symlink to local
+
+<repo>/renders/<slug>/                    # visible — final cuts land here
+├── 01-tema_do_corte.mp4
+├── 02-outro_beat.mp4
+└── …                                     # ready to upload to Reels/TikTok
+
+~/.claude/skills/sermon-cuts/memory/messages/<slug>/   # hidden state
+├── meta.json                             # URL/title/duration
+├── transcript.json                       # word-level transcription
+├── vad.json                              # speech segments + cut candidates
+├── propose_input.json                    # combined input for the LLM
+├── cuts_proposed.json                    # LLM output, you curate this
+├── srts/NN-slug.srt                      # subtitle files
+└── corrections.txt                       # optional per-message scrub dict
 ```
+
+The split is deliberate: anything a human navigates to (the source mp4
+you ingested, the rendered cuts ready to publish) sits in plain sight at
+the top of the repo. Anything the pipeline reads/writes between runs
+(transcripts, intermediates) stays in the hidden `memory/messages/`
+state folder so the visible dirs don't get cluttered.
+
+### Overriding paths
+
+Three env vars override the defaults:
+
+- `SERMON_CUTS_SOURCES_DIR` — where source .mp4 files live
+- `SERMON_CUTS_RENDERS_DIR` — where final cuts land
+- `SERMON_CUTS_MESSAGES_DIR` — where per-message state lives
+
+Useful when keeping renders on an external drive or in a synced
+Dropbox/iCloud folder.
+
+### Migrating from an older layout
+
+Pre-2026-05 installs kept `source.mp4` and `renders/` inside
+`memory/messages/<slug>/`. `pipeline.sh doctor` flags this on startup;
+run the migration once to move them to the new visible paths:
+
+```bash
+./scripts/pipeline.sh migrate --dry-run    # preview
+./scripts/pipeline.sh migrate              # actually move
+```
+
+Idempotent and conservative — won't clobber existing files at the
+destination.

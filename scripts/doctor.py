@@ -22,7 +22,18 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import _BOLD, _DIM, _RED, _RST, _TTY, _YEL, resolve_ffmpeg
+from _common import (
+    _BOLD,
+    _DIM,
+    _RED,
+    _RST,
+    _TTY,
+    _YEL,
+    resolve_ffmpeg,
+    resolve_messages_dir,
+    resolve_renders_dir,
+    resolve_sources_dir,
+)
 
 GREEN = "\033[32m" if _TTY else ""
 SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
@@ -242,6 +253,39 @@ def check_skill_symlinks() -> None:
     ok("skill symlink", str(SKILL_ROOT))
 
 
+def check_data_paths() -> None:
+    """Report the three user-facing data dirs, and flag if the legacy
+    layout (source.mp4 / renders/ inside memory/messages/) still has
+    leftovers that should be migrated."""
+    sources = resolve_sources_dir()
+    renders = resolve_renders_dir()
+    messages = resolve_messages_dir()
+
+    ok("sources/", str(sources) + (" (existe)" if sources.exists() else " (será criada)"))
+    ok("renders/", str(renders) + (" (existe)" if renders.exists() else " (será criada)"))
+    ok("memory/messages/", str(messages))
+
+    # Legacy detection: if any slug under messages/ still has source.mp4
+    # or renders/ in the old location, recommend running migrate_paths.
+    legacy_sources = 0
+    legacy_renders = 0
+    if messages.exists():
+        for slug_dir in messages.iterdir():
+            if not slug_dir.is_dir() or slug_dir.name.startswith("."):
+                continue
+            if (slug_dir / "source.mp4").exists() or (slug_dir / "source.mp4").is_symlink():
+                legacy_sources += 1
+            if (slug_dir / "renders").is_dir():
+                legacy_renders += 1
+    if legacy_sources or legacy_renders:
+        warn(
+            f"layout antigo detectado: {legacy_sources} source.mp4 + "
+            f"{legacy_renders} renders/ em memory/messages/",
+            hint="rode `./scripts/migrate_paths.py --dry-run` pra ver, "
+            "depois sem --dry-run pra mover pros novos paths visíveis",
+        )
+
+
 def check_platform_encoder() -> None:
     """Inform the user if the hardware encoder will kick in (FYI only)."""
     system = platform.system()
@@ -267,6 +311,9 @@ def main() -> None:
 
     section("Skill installation")
     check_skill_symlinks()
+
+    section("Data paths")
+    check_data_paths()
 
     section("Subtitle style")
     check_subtitle_preset()

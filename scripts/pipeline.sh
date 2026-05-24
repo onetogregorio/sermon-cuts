@@ -29,9 +29,10 @@ usage() {
 
 # Short-circuit subcommands that don't need arg parsing.
 case "${1:-}" in
-  doctor)  exec $PY "$SCRIPTS/doctor.py" ;;
-  ui)      shift; exec $PY "$SCRIPTS/ui.py" "$@" ;;
-  nightly) shift; exec $PY "$SCRIPTS/nightly.py" "$@" ;;
+  doctor)   exec $PY "$SCRIPTS/doctor.py" ;;
+  ui)       shift; exec $PY "$SCRIPTS/ui.py" "$@" ;;
+  nightly)  shift; exec $PY "$SCRIPTS/nightly.py" "$@" ;;
+  migrate)  shift; exec $PY "$SCRIPTS/migrate_paths.py" "$@" ;;
   review)
     shift
     [[ $# -eq 0 ]] && { echo "usage: pipeline.sh review <slug>"; exit 1; }

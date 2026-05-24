@@ -280,21 +280,58 @@ Orquestrador:
 
 ## Layout de diretório por mensagem
 
-Após uma execução completa:
+A pipeline divide cada mensagem em **duas pastas visíveis** dentro do
+repo e **uma pasta escondida de estado** dentro da instalação da skill:
 
 ```
-memory/messages/<slug>/
-├── source.mp4              # symlink ou download
-├── meta.json               # URL/título/duração
-├── transcript.json         # nível de palavra com type=word/spacing
-├── vad.json                # segmentos de fala + candidatos de corte
-├── propose_input.json      # input combinado pro LLM
-├── cuts_proposed.json      # output do LLM (você cura isso)
-├── srts/
-│   └── NN-slug.srt
-└── renders/
-    └── NN-slug.mp4         # final, pronto pra subir
+<repo>/sources/<slug>/                    # visível — você coloca/baixa aqui
+└── source.mp4                            # download do YouTube OU symlink do local
+
+<repo>/renders/<slug>/                    # visível — cortes finais aparecem aqui
+├── 01-tema_do_corte.mp4
+├── 02-outro_beat.mp4
+└── …                                     # prontos pra subir no Reels/TikTok
+
+~/.claude/skills/sermon-cuts/memory/messages/<slug>/   # estado escondido
+├── meta.json                             # URL/título/duração
+├── transcript.json                       # transcrição word-level
+├── vad.json                              # speech segments + cut candidates
+├── propose_input.json                    # input combinado pro LLM
+├── cuts_proposed.json                    # output do LLM (você cura aqui)
+├── srts/NN-slug.srt                      # arquivos de legenda
+└── corrections.txt                       # dict opcional de scrub por mensagem
 ```
+
+A divisão é proposital: o que um humano vai navegar (source.mp4 que
+você ingeriu, cortes prontos pra publicar) fica visível no topo do
+repo. O que a pipeline lê/escreve entre runs (transcripts, intermediários)
+fica na pasta escondida `memory/messages/`, pra as pastas visíveis não
+ficarem poluídas.
+
+### Overriding paths
+
+Três env vars sobrescrevem os defaults:
+
+- `SERMON_CUTS_SOURCES_DIR` — onde os source .mp4 vivem
+- `SERMON_CUTS_RENDERS_DIR` — onde os cortes finais caem
+- `SERMON_CUTS_MESSAGES_DIR` — onde o estado por-mensagem vive
+
+Útil pra manter renders num HD externo ou numa pasta sincada de
+Dropbox/iCloud.
+
+### Migrando de um layout antigo
+
+Instalações pré-2026-05 mantinham `source.mp4` e `renders/` dentro de
+`memory/messages/<slug>/`. O `pipeline.sh doctor` detecta isso no
+startup; rode a migration uma vez pra mover pros novos paths visíveis:
+
+```bash
+./scripts/pipeline.sh migrate --dry-run    # preview
+./scripts/pipeline.sh migrate              # move de verdade
+```
+
+Idempotente e conservador — não sobrescreve arquivos existentes no
+destino.
 
 ---
 
