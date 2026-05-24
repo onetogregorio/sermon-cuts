@@ -29,6 +29,7 @@ from _common import (
     _RST,
     _TTY,
     _YEL,
+    config_dir,
     resolve_ffmpeg,
     resolve_messages_dir,
     resolve_renders_dir,
@@ -139,7 +140,7 @@ def check_subtitle_preset() -> None:
 
     import yaml
 
-    cfg_path = SKILL_ROOT / "config/render_defaults.yaml"
+    cfg_path = config_dir() / "render_defaults.yaml"
     try:
         cfg = yaml.safe_load(cfg_path.read_text())
     except Exception:
@@ -149,7 +150,7 @@ def check_subtitle_preset() -> None:
     preset_name = os.environ.get("SUBTITLE_PRESET") or cfg.get("subtitle", {}).get(
         "preset", "arial-black"
     )
-    preset_file = SKILL_ROOT / "config/style_presets" / f"{preset_name}.txt"
+    preset_file = config_dir() / "style_presets" / f"{preset_name}.txt"
     if not preset_file.exists():
         bad("subtitle preset", f"preset '{preset_name}' não tem .txt em config/style_presets/")
         return

@@ -37,12 +37,13 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import fail, warn
+from _common import fail, repo_root, resolve_messages_dir, warn
 
-SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
-MESSAGES = SKILL_ROOT / "memory/messages"
-STATE_FILE = SKILL_ROOT / "memory/.nightly_state.json"
-PIPELINE = SKILL_ROOT / "scripts/pipeline.sh"
+MESSAGES = resolve_messages_dir()
+# Nightly state file sits next to the messages dir (same lifetime: when
+# you blow away the messages folder you forget what nightly has seen).
+STATE_FILE = MESSAGES.parent / ".nightly_state.json"
+PIPELINE = repo_root() / "scripts/pipeline.sh"
 
 
 def _load_state() -> dict:

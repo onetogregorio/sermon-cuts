@@ -42,13 +42,18 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import SCHEMA_VERSION, fail, resolve_ffmpeg, resolve_sources_dir
+from _common import (
+    SCHEMA_VERSION,
+    config_dir,
+    fail,
+    resolve_ffmpeg,
+    resolve_messages_dir,
+    resolve_sources_dir,
+)
 
 SOURCES = resolve_sources_dir()
-
-SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
-MESSAGES = SKILL_ROOT / "memory/messages"
-CFG = yaml.safe_load((SKILL_ROOT / "config/render_defaults.yaml").read_text())
+MESSAGES = resolve_messages_dir()
+CFG = yaml.safe_load((config_dir() / "render_defaults.yaml").read_text())
 FFMPEG = resolve_ffmpeg(CFG.get("ffmpeg_bin"))
 
 

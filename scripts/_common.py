@@ -162,26 +162,32 @@ _SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
 
 
 def repo_root() -> Path:
-    """The real filesystem path of the cloned repo, even when the skill is
-    installed via symlinks under ``~/.claude/skills/sermon-cuts/``.
+    """The real filesystem path of the cloned repo, regardless of how the
+    user reached it (direct clone, ~/.claude/skills/ symlinks, CI checkout).
 
     Resolution order:
       1. ``SERMON_CUTS_REPO`` env var if set.
-      2. Resolve any symlink on ``~/.claude/skills/sermon-cuts/scripts``
-         (this dir is always symlinked at install time) → parent.
-      3. Fall back to the skill root (if the install didn't symlink and
-         everything lives under the skill dir, paths still work).
+      2. ``Path(__file__).resolve().parent.parent`` — this module always
+         lives at ``<repo>/scripts/_common.py``, so its grandparent is
+         always the real repo root, with or without an install symlink
+         in the path. Works in CI (no skill installed) and locally
+         (skill symlinks resolve through to here).
     """
     env = os.environ.get("SERMON_CUTS_REPO", "").strip()
     if env:
         return Path(env)
-    scripts_dir = _SKILL_ROOT / "scripts"
-    if scripts_dir.is_symlink() or scripts_dir.exists():
-        try:
-            return scripts_dir.resolve().parent
-        except OSError:
-            pass
-    return _SKILL_ROOT
+    return Path(__file__).resolve().parent.parent
+
+
+def config_dir() -> Path:
+    """``<repo>/config/`` — pipeline config files, prompts, style presets,
+    function-word lists. Read by every script."""
+    return repo_root() / "config"
+
+
+def prompts_dir() -> Path:
+    """``<repo>/prompts/`` — agent system prompts (propose_cuts, scrub_srt)."""
+    return repo_root() / "prompts"
 
 
 def resolve_sources_dir() -> Path:
@@ -213,26 +219,30 @@ def resolve_messages_dir() -> Path:
     """Where per-message state (transcript.json, vad.json, srts/, meta.json,
     cuts_proposed.json, corrections.txt) lives.
 
-    Default: ``<skill>/memory/messages/<slug>/`` — kept under the hidden
-    skill folder because users don't typically navigate here; it's
-    pipeline state, not user-facing output.
+    Default: ``<skill>/memory/messages/<slug>/`` when the skill install
+    exists at ``~/.claude/skills/sermon-cuts/``. Otherwise (CI runs,
+    direct-clone usage without the install symlinks) falls back to
+    ``<repo>/memory/messages/``.
 
     Override with ``SERMON_CUTS_MESSAGES_DIR``.
     """
     env = os.environ.get("SERMON_CUTS_MESSAGES_DIR", "").strip()
-    return Path(env) if env else (_SKILL_ROOT / "memory/messages")
+    if env:
+        return Path(env)
+    if _SKILL_ROOT.exists():
+        return _SKILL_ROOT / "memory/messages"
+    return repo_root() / "memory/messages"
 
 
 # ─── subtitle style preset selection ──────────────────────────────────────
 
 
-def load_style_preset(skill_root: Path, subtitle_cfg: dict) -> str:
+def load_style_preset(subtitle_cfg: dict | None = None) -> str:
     """Resolve the libass ``force_style`` string for the burn-in pass.
 
     Lookup order (first match wins):
       1. ``SUBTITLE_PRESET`` env var — quick per-render override without
-         touching any file. Useful for the dogfooding/branded workflow:
-         ``SUBTITLE_PRESET=outfit-black ./pipeline.sh ...``
+         touching any file.
       2. ``config/force_style.txt`` if present — advanced override that
          lets a power user pin a fully hand-tuned style.
       3. ``config/style_presets/<preset>.txt`` where ``<preset>`` comes
@@ -240,25 +250,27 @@ def load_style_preset(skill_root: Path, subtitle_cfg: dict) -> str:
          ``arial-black``).
       4. ``config/style_presets/arial-black.txt`` as universal fallback.
 
-    The returned string is ready to splice into an ffmpeg ``-vf
-    "subtitles=...:force_style='<...>'"`` filter.
+    Reads config_dir() under the hood, which itself follows `__file__`
+    to the real repo — works in CI without a skill install.
     """
+    presets_dir = config_dir() / "style_presets"
+
     env_preset = os.environ.get("SUBTITLE_PRESET", "").strip()
     if env_preset:
-        env_path = skill_root / "config" / "style_presets" / f"{env_preset}.txt"
+        env_path = presets_dir / f"{env_preset}.txt"
         if env_path.exists():
             return env_path.read_text().strip()
         # Fall through silently to lower-priority sources rather than failing —
         # an unknown preset name shouldn't break a render.
 
-    legacy = skill_root / "config" / "force_style.txt"
+    legacy = config_dir() / "force_style.txt"
     if legacy.exists() and legacy.stat().st_size > 0:
         return legacy.read_text().strip()
 
     preset = (subtitle_cfg or {}).get("preset") or "arial-black"
-    preset_path = skill_root / "config" / "style_presets" / f"{preset}.txt"
+    preset_path = presets_dir / f"{preset}.txt"
     if not preset_path.exists():
-        fallback = skill_root / "config" / "style_presets" / "arial-black.txt"
+        fallback = presets_dir / "arial-black.txt"
         if fallback.exists():
             return fallback.read_text().strip()
         # Last-ditch hardcoded default so a misconfigured install still renders.

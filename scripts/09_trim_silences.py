@@ -51,13 +51,18 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import fail, pick_video_encoder, resolve_ffmpeg, resolve_renders_dir
+from _common import (
+    config_dir,
+    fail,
+    pick_video_encoder,
+    resolve_ffmpeg,
+    resolve_messages_dir,
+    resolve_renders_dir,
+)
 
+MESSAGES = resolve_messages_dir()
 RENDERS = resolve_renders_dir()
-
-SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
-MESSAGES = SKILL_ROOT / "memory/messages"
-CFG = yaml.safe_load((SKILL_ROOT / "config/render_defaults.yaml").read_text())
+CFG = yaml.safe_load((config_dir() / "render_defaults.yaml").read_text())
 FFMPEG = resolve_ffmpeg(CFG.get("ffmpeg_bin"))
 VID = CFG["video"]
 

@@ -28,10 +28,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import SCHEMA_VERSION
+from _common import SCHEMA_VERSION, prompts_dir, resolve_messages_dir
 
-SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
-MESSAGES = SKILL_ROOT / "memory/messages"
+MESSAGES = resolve_messages_dir()
 
 
 def words_to_text_with_timestamps(words: list[dict]) -> str:
@@ -84,7 +83,7 @@ def main() -> None:
             {
                 "ok": True,
                 "input_path": str(out),
-                "prompt_path": str(SKILL_ROOT / "prompts/propose_cuts.md"),
+                "prompt_path": str(prompts_dir() / "propose_cuts.md"),
                 "expected_output_path": str(msg_dir / "cuts_proposed.json"),
                 "instructions": (
                     "Now read the prompt at prompt_path and the input at "

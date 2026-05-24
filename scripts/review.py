@@ -26,10 +26,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import fail
+from _common import fail, repo_root, resolve_messages_dir
 
-SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
-MESSAGES = SKILL_ROOT / "memory/messages"
+MESSAGES = resolve_messages_dir()
 
 
 def _truncate(text: str, width: int) -> str:
@@ -181,7 +180,7 @@ def main() -> None:
     # expects (--render-cuts uses 1-based to match the human-readable JSON
     # numbering shown by --dry-run).
     chosen = [str(i + 1) for i in indices]
-    cmd = f"{SKILL_ROOT}/scripts/pipeline.sh --render-cuts {','.join(chosen)} --slug {args.slug}"
+    cmd = f"{repo_root()}/scripts/pipeline.sh --render-cuts {','.join(chosen)} --slug {args.slug}"
     print(cmd)
 
 

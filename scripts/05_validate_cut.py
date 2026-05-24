@@ -32,11 +32,10 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import fail
+from _common import config_dir, fail, resolve_messages_dir
 
-SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
-MESSAGES = SKILL_ROOT / "memory/messages"
-CFG = yaml.safe_load((SKILL_ROOT / "config/render_defaults.yaml").read_text())["cut_validation"]
+MESSAGES = resolve_messages_dir()
+CFG = yaml.safe_load((config_dir() / "render_defaults.yaml").read_text())["cut_validation"]
 
 
 def find_last_word(words: list[dict], t_end: float) -> dict | None:

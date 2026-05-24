@@ -28,13 +28,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import yaml
 
-SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
-MESSAGES = SKILL_ROOT / "memory/messages"
-CFG = yaml.safe_load((SKILL_ROOT / "config/render_defaults.yaml").read_text())
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import config_dir, resolve_messages_dir
+
+MESSAGES = resolve_messages_dir()
+CFG = yaml.safe_load((config_dir() / "render_defaults.yaml").read_text())
 SUB_CFG = CFG["subtitle"]
 MIN_WORDS = SUB_CFG["min_words"]
 MAX_WORDS = SUB_CFG["max_words"]
@@ -43,7 +46,7 @@ PUNCT_BREAK = set(".!?")
 SOFT_BREAK = set(",;:")
 FUNC = set(
     w
-    for line in (SKILL_ROOT / "config/function_words_pt.txt").read_text().splitlines()
+    for line in (config_dir() / "function_words_pt.txt").read_text().splitlines()
     if line.strip() and not line.startswith("#")
     for w in line.split()
 )

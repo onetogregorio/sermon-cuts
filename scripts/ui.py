@@ -29,11 +29,10 @@ import textwrap
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import fail
+from _common import fail, repo_root, resolve_messages_dir
 
-SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
-MESSAGES = SKILL_ROOT / "memory/messages"
-SCRIPTS = SKILL_ROOT / "scripts"
+MESSAGES = resolve_messages_dir()
+SCRIPTS = repo_root() / "scripts"
 PIPELINE = SCRIPTS / "pipeline.sh"
 
 

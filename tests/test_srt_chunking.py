@@ -49,11 +49,12 @@ def test_majority_of_cues_avoid_forbidden_endings() -> None:
     This test catches a regression where the shifter stops working entirely:
     if more than ~20% of cues end on a forbidden ending we'd notice."""
     import yaml
+    from _common import config_dir
 
     forbid = set(
-        yaml.safe_load((build_srt_mod.SKILL_ROOT / "config/render_defaults.yaml").read_text())[
-            "cut_validation"
-        ]["forbid_endings"]
+        yaml.safe_load((config_dir() / "render_defaults.yaml").read_text())["cut_validation"][
+            "forbid_endings"
+        ]
     )
     entries = _entries(0.0, 60.0)
     bad = 0

@@ -87,11 +87,21 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import _BOLD, _DIM, _RST, _TTY, _YEL, fail, warn
+from _common import (
+    _BOLD,
+    _DIM,
+    _RST,
+    _TTY,
+    _YEL,
+    config_dir,
+    fail,
+    prompts_dir,
+    resolve_messages_dir,
+    warn,
+)
 
-SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
-MESSAGES = SKILL_ROOT / "memory/messages"
-CFG = yaml.safe_load((SKILL_ROOT / "config/render_defaults.yaml").read_text())
+MESSAGES = resolve_messages_dir()
+CFG = yaml.safe_load((config_dir() / "render_defaults.yaml").read_text())
 FORBID_ENDINGS = set(CFG.get("cut_validation", {}).get("forbid_endings", []))
 
 # ─── pattern data ─────────────────────────────────────────────────────────
@@ -567,7 +577,7 @@ def _build_llm_prompt(srt_text: str, suspects: list[dict]) -> tuple[str, str]:
     """Return (system_prompt, user_message) for the LLM call. The system
     prompt is loaded from ``prompts/scrub_srt.md`` so the SDK-less path
     here stays in sync with the agent-review prompt."""
-    system_path = SKILL_ROOT / "prompts" / "scrub_srt.md"
+    system_path = prompts_dir() / "scrub_srt.md"
     system = (
         system_path.read_text()
         if system_path.exists()
@@ -855,7 +865,7 @@ def main() -> None:
             "mode": "agent_review",
             "srt_path": str(srt_path),
             "transcript_path": str(transcript_path),
-            "prompt_path": str(SKILL_ROOT / "prompts" / "scrub_srt.md"),
+            "prompt_path": str(prompts_dir() / "scrub_srt.md"),
             "cut_index": args.cut_index,
             "cut": {
                 "n": n,

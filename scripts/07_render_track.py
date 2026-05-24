@@ -35,6 +35,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
 from _common import (
+    config_dir,
     fail,
     load_style_preset,
     pick_video_encoder,
@@ -44,29 +45,28 @@ from _common import (
     resolve_sources_dir,
 )
 
-SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
 MESSAGES = resolve_messages_dir()
 SOURCES = resolve_sources_dir()
 RENDERS = resolve_renders_dir()
-CFG = yaml.safe_load((SKILL_ROOT / "config/render_defaults.yaml").read_text())
+CFG = yaml.safe_load((config_dir() / "render_defaults.yaml").read_text())
 FFMPEG = resolve_ffmpeg(CFG.get("ffmpeg_bin"))
 OUT_W = CFG["output"]["width"]
 OUT_H = CFG["output"]["height"]
 OUT_FPS = CFG["output"]["fps"]
 VID = CFG["video"]
 TRK = CFG["tracking"]
-FORCE_STYLE = load_style_preset(SKILL_ROOT, CFG.get("subtitle", {}))
+FORCE_STYLE = load_style_preset(CFG.get("subtitle", {}))
 
 
 MP_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.task"
-MP_MODEL_PATH = SKILL_ROOT / "config" / "blaze_face_short_range.task"
+MP_MODEL_PATH = config_dir() / "blaze_face_short_range.task"
 
 # Pose landmarker — used as a fallback when face detection misses, e.g.,
 # when the preacher looks down to read the Bible or turns away briefly.
 # The "lite" variant is ~10MB and runs at the same 2-fps sampling cadence
 # we use for face detection, so the extra cost is negligible.
 MP_POSE_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task"
-MP_POSE_PATH = SKILL_ROOT / "config" / "pose_landmarker_lite.task"
+MP_POSE_PATH = config_dir() / "pose_landmarker_lite.task"
 
 
 def _ensure_mediapipe_model() -> Path:
