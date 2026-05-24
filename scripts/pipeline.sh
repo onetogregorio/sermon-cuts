@@ -9,6 +9,10 @@
 #   pipeline.sh --render-cuts N,M,P --slug S   # batch render
 #   pipeline.sh --reburn-srt N --slug S        # only re-burn subtitles (no retracking)
 #
+# Render flags:
+#   --skip-scrub        skip the 06b SRT lint pass (useful for CI / batch
+#                       runs where no human is around to review suspects)
+#
 # Source can be a YouTube URL or a local .mp4/.mov path.
 
 set -euo pipefail
@@ -44,6 +48,7 @@ MODE="ingest_propose"
 SOURCE=""
 SLUG=""
 CUTS=""
+SKIP_SCRUB=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -52,10 +57,29 @@ while [[ $# -gt 0 ]]; do
     --render-cuts)  MODE="render"; CUTS="$2"; shift 2;;
     --reburn-srt)   MODE="reburn"; CUTS="$2"; shift 2;;
     --slug)         SLUG="$2"; shift 2;;
+    --skip-scrub)   SKIP_SCRUB=1; shift;;
     -h|--help)      usage;;
     *)              SOURCE="$1"; shift;;
   esac
 done
+
+# scrub() — runs 06b unless --skip-scrub was passed. Interactive when on a
+# TTY (review suggestions y/n/edit/skip), otherwise falls through with
+# --auto-apply so batch/CI runs still get the dictionary + high-confidence
+# fixes without prompting.
+scrub() {
+  local idx="$1"
+  if [[ "$SKIP_SCRUB" -eq 1 ]]; then
+    echo "→ cut #$idx: scrub SRT [skipped — --skip-scrub]"
+    return
+  fi
+  echo "→ cut #$idx: scrub SRT (review suspeitos)"
+  if [[ -t 0 ]]; then
+    $PY "$SCRIPTS/06b_scrub_srt.py" "$SLUG" "$idx" >/dev/null
+  else
+    $PY "$SCRIPTS/06b_scrub_srt.py" "$SLUG" "$idx" --auto-apply >/dev/null
+  fi
+}
 
 case "$MODE" in
   ingest_propose)
@@ -84,6 +108,7 @@ case "$MODE" in
       $PY "$SCRIPTS/05_validate_cut.py" "$SLUG" "$IDX" --write-back
       echo "→ cut #$IDX: build SRT"
       $PY "$SCRIPTS/06_build_srt.py" "$SLUG" "$IDX"
+      scrub "$IDX"
       echo "→ cut #$IDX: render with tracking + burn legenda"
       $PY "$SCRIPTS/07_render_track.py" "$SLUG" "$IDX"
       echo "→ cut #$IDX: normalize audio"
@@ -99,6 +124,7 @@ case "$MODE" in
     for IDX in "${IDXS[@]}"; do
       echo "→ cut #$IDX: rebuild SRT + reburn"
       $PY "$SCRIPTS/06_build_srt.py" "$SLUG" "$IDX"
+      scrub "$IDX"
       $PY "$SCRIPTS/07_render_track.py" "$SLUG" "$IDX"
       $PY "$SCRIPTS/08_audio_normalize.py" "$SLUG" "$IDX" --in-place
       $PY "$SCRIPTS/09_trim_silences.py" "$SLUG" "$IDX" --in-place
