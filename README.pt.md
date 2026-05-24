@@ -162,7 +162,7 @@ Se esse projeto te poupar uma noite, vou adorar saber.
   tecnologia e construir com agentes de IA
 → **Instagram**: [@onetogregorio](https://instagram.com/onetogregorio) —
   bastidor, cortes de pregação, pensamentos do dia
-→ **GitHub**: [@netogregorio](https://github.com/netogregorio)
+→ **GitHub**: [@onetogregorio](https://github.com/onetogregorio)
 
 Construído com [Claude Code](https://claude.com/claude-code).
 

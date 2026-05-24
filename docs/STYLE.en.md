@@ -109,4 +109,4 @@ Intermediates (EDLs, SRTs, verify frames, render preview) live in `edit/edls/`, 
 
 ---
 
-By [@netogregorio](https://github.com/netogregorio) · [netogregorio.com](https://netogregorio.com) · [@onetogregorio](https://instagram.com/onetogregorio)
+By [@onetogregorio](https://github.com/onetogregorio) · [netogregorio.com](https://netogregorio.com) · [@onetogregorio](https://instagram.com/onetogregorio)

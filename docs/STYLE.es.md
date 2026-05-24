@@ -109,4 +109,4 @@ Intermediarios (EDLs, SRTs, frames de verify, render preview) viven en `edit/edl
 
 ---
 
-Por [@netogregorio](https://github.com/netogregorio) · [netogregorio.com](https://netogregorio.com) · [@onetogregorio](https://instagram.com/onetogregorio)
+Por [@onetogregorio](https://github.com/onetogregorio) · [netogregorio.com](https://netogregorio.com) · [@onetogregorio](https://instagram.com/onetogregorio)

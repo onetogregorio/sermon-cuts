@@ -162,7 +162,7 @@ If this project saves you an evening, I'd love to hear about it.
   technology, and building with AI agents
 → **Instagram**: [@onetogregorio](https://instagram.com/onetogregorio) — behind
   the scenes, sermon clips, daily thoughts
-→ **GitHub**: [@netogregorio](https://github.com/netogregorio)
+→ **GitHub**: [@onetogregorio](https://github.com/onetogregorio)
 
 Built with [Claude Code](https://claude.com/claude-code).
 
