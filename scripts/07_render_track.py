@@ -34,7 +34,7 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import fail, resolve_ffmpeg
+from _common import fail, pick_video_encoder, resolve_ffmpeg
 
 SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
 MESSAGES = SKILL_ROOT / "memory/messages"
@@ -162,10 +162,36 @@ def cx_at(smoothed: list[tuple[float, float]], t_abs: float) -> float:
     return smoothed[-1][1]
 
 
-def render_vertical_with_track(
-    src: Path, seg_start: float, seg_end: float, out_video: Path
+def render_cut_singlepass(
+    src: Path,
+    seg_start: float,
+    seg_end: float,
+    out_video: Path,
+    srt: Path | None = None,
 ) -> None:
-    """Pass 2: render frame-by-frame, pipe raw to ffmpeg."""
+    """Render a vertical cut in ONE ffmpeg pass.
+
+    Combines what used to be three steps:
+      (1) encode the tracked vertical frames to H.264
+      (2) mux the source audio in (``-c:v copy``)
+      (3) re-encode with the ``subtitles`` filter for burn-in
+
+    Steps (1) and (3) both did a full H.264 encode, so the old pipeline
+    paid for a second encode and accumulated generation loss. Single-pass
+    fuses everything into one encode:
+
+      - input 0 = raw BGR frames piped from this Python process (already
+                  tracked + cropped to OUT_W × OUT_H)
+      - input 1 = the source MP4 (seekable; we cut out the audio for the
+                  segment using -ss/-to on the input side)
+      - filter  = ``subtitles=<srt>:force_style=...`` applied to input 0
+                  (skipped when ``srt is None``)
+      - output  = mapped from raw frames + source audio, encoded once
+
+    On Apple Silicon ``pick_video_encoder`` picks ``h264_videotoolbox``,
+    which is ~6-10× faster than libx264 at indistinguishable quality for
+    1080p talking-head content.
+    """
     import cv2
 
     cap = cv2.VideoCapture(str(src))
@@ -189,47 +215,71 @@ def render_vertical_with_track(
     )
 
     total_frames = int(round((seg_end - seg_start) * OUT_FPS))
-    ff = subprocess.Popen(
-        [
-            FFMPEG,
-            "-y",
-            "-f",
-            "rawvideo",
-            "-pix_fmt",
-            "bgr24",
-            "-s",
-            f"{OUT_W}x{OUT_H}",
-            "-r",
-            str(OUT_FPS),
-            "-i",
-            "-",
-            "-c:v",
-            VID["encoder"],
-            "-preset",
-            VID["preset"],
-            "-crf",
-            str(VID["crf"]),
-            "-pix_fmt",
-            VID["pix_fmt"],
-            # Tag BT.709 color metadata so macOS Preview / QuickTime render properly
-            # (without these, Preview shows a blank/black canvas for vertical clips).
-            "-color_range",
-            "tv",
-            "-colorspace",
-            "bt709",
-            "-color_primaries",
-            "bt709",
-            "-color_trc",
-            "bt709",
-            "-movflags",
-            "+faststart",
-            str(out_video),
-        ],
-        stdin=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-    )
 
-    print(f"  pass 2: rendering {total_frames} frames...", file=sys.stderr)
+    # Build the filter graph. With an SRT we burn it on input 0; without,
+    # we pass the raw frames through unchanged.
+    vf_args: list[str] = []
+    if srt is not None:
+        # ffmpeg parses force_style as ASS key=value pairs separated by commas;
+        # those commas need to be escaped inside the filter graph.
+        style_esc = FORCE_STYLE.replace(",", r"\,")
+        # Single-quote the whole filter expression so the colon in ``subtitles=``
+        # isn't read as a filter separator.
+        vf_args = ["-vf", f"subtitles={srt}:force_style='{style_esc}'"]
+
+    encoder_args = pick_video_encoder(VID)
+
+    cmd = [
+        FFMPEG,
+        "-y",
+        # Input 0: raw BGR frames piped from cv2 below.
+        "-f",
+        "rawvideo",
+        "-pix_fmt",
+        "bgr24",
+        "-s",
+        f"{OUT_W}x{OUT_H}",
+        "-r",
+        str(OUT_FPS),
+        "-i",
+        "-",
+        # Input 1: source video, audio segment only.
+        "-ss",
+        str(seg_start),
+        "-to",
+        str(seg_end),
+        "-i",
+        str(src),
+        # Map: video from raw frames (0), audio from source (1).
+        "-map",
+        "0:v",
+        "-map",
+        "1:a",
+        *vf_args,
+        *encoder_args,
+        # BT.709 color tags so macOS Preview / QuickTime render properly
+        # (without these, Preview shows a blank/black canvas for vertical clips).
+        "-color_range",
+        "tv",
+        "-colorspace",
+        "bt709",
+        "-color_primaries",
+        "bt709",
+        "-color_trc",
+        "bt709",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "128k",
+        "-shortest",
+        "-movflags",
+        "+faststart",
+        str(out_video),
+    ]
+
+    ff = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL)
+
+    print(f"  pass 2: rendering {total_frames} frames (single-pass)...", file=sys.stderr)
     cap.set(cv2.CAP_PROP_POS_MSEC, seg_start * 1000)
     for fi in range(total_frames):
         ok, frame = cap.read()
@@ -246,79 +296,13 @@ def render_vertical_with_track(
         if fi % 90 == 0:
             print(f"    frame {fi}/{total_frames} (t={t_abs:.1f}s, x={crop_x})", file=sys.stderr)
     ff.stdin.close()
-    ff.wait()
+    rc = ff.wait()
     cap.release()
-
-
-def mux_audio(video: Path, src: Path, seg_start: float, seg_end: float, out: Path) -> None:
-    subprocess.run(
-        [
-            FFMPEG,
-            "-y",
-            "-i",
-            str(video),
-            "-ss",
-            str(seg_start),
-            "-to",
-            str(seg_end),
-            "-i",
-            str(src),
-            "-map",
-            "0:v",
-            "-map",
-            "1:a",
-            "-c:v",
-            "copy",
-            "-c:a",
-            "aac",
-            "-b:a",
-            "128k",
-            "-movflags",
-            "+faststart",
-            str(out),
-        ],
-        check=True,
-        stderr=subprocess.DEVNULL,
-    )
-
-
-def burn_subtitles(video: Path, srt: Path, out: Path) -> None:
-    style_esc = FORCE_STYLE.replace(",", r"\,")
-    vf = f"subtitles={srt}:force_style='{style_esc}'"
-    subprocess.run(
-        [
-            FFMPEG,
-            "-y",
-            "-i",
-            str(video),
-            "-vf",
-            vf,
-            "-c:v",
-            VID["encoder"],
-            "-preset",
-            VID["preset"],
-            "-crf",
-            str(VID["crf"]),
-            "-pix_fmt",
-            VID["pix_fmt"],
-            # Re-tag BT.709 color metadata after burn-in re-encode (see render_segment).
-            "-color_range",
-            "tv",
-            "-colorspace",
-            "bt709",
-            "-color_primaries",
-            "bt709",
-            "-color_trc",
-            "bt709",
-            "-c:a",
-            "copy",
-            "-movflags",
-            "+faststart",
-            str(out),
-        ],
-        check=True,
-        stderr=subprocess.DEVNULL,
-    )
+    if rc != 0:
+        fail(
+            f"ffmpeg saiu com código {rc} ao renderizar {out_video.name}",
+            hint="rode com FFMPEG_BIN apontando pra um build com libass e reveja o stderr",
+        )
 
 
 def main() -> None:
@@ -339,31 +323,19 @@ def main() -> None:
 
     renders = msg_dir / "renders"
     renders.mkdir(exist_ok=True)
-    tmp_dir = msg_dir / "tmp"
-    tmp_dir.mkdir(exist_ok=True)
-
-    vertical_silent = tmp_dir / f"{n:02d}-{slug}.vertical.mp4"
-    vertical_audio = tmp_dir / f"{n:02d}-{slug}.va.mp4"
     final = renders / f"{n:02d}-{slug}.mp4"
 
-    print(f"[render] cut #{n} '{slug}' {seg_start:.2f}-{seg_end:.2f}s", file=sys.stderr)
-    render_vertical_with_track(src, seg_start, seg_end, vertical_silent)
-    mux_audio(vertical_silent, src, seg_start, seg_end, vertical_audio)
-
-    if args.no_subs:
-        vertical_audio.replace(final)
-    else:
+    srt: Path | None = None
+    if not args.no_subs:
         srt = msg_dir / "srts" / f"{n:02d}-{slug}.srt"
         if not srt.exists():
             fail(
                 f"SRT não encontrado: {srt}",
                 hint=f"rode primeiro: ./scripts/06_build_srt.py {args.slug} {args.cut_index}",
             )
-        burn_subtitles(vertical_audio, srt, final)
 
-    # Cleanup intermediates
-    vertical_silent.unlink(missing_ok=True)
-    vertical_audio.unlink(missing_ok=True)
+    print(f"[render] cut #{n} '{slug}' {seg_start:.2f}-{seg_end:.2f}s", file=sys.stderr)
+    render_cut_singlepass(src, seg_start, seg_end, final, srt=srt)
 
     print(
         json.dumps(

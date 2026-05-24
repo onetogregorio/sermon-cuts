@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import platform
 import sys
 from pathlib import Path
 from typing import NoReturn
@@ -93,3 +94,62 @@ def resolve_ffmpeg(config_value: str | None = None) -> str:
     if hb_full.exists():
         return str(hb_full)
     return "ffmpeg"
+
+
+# ─── video encoder selection ──────────────────────────────────────────────
+
+
+def pick_video_encoder(config: dict) -> list[str]:
+    """Return the ffmpeg encoder argv chunk best suited to this machine.
+
+    On Apple Silicon we prefer ``h264_videotoolbox`` (hardware-accelerated,
+    ~6-10× faster than libx264 ``preset=slow`` at indistinguishable quality
+    for 1080p talking-head content). Everywhere else we fall through to
+    whatever the config says (typically libx264 CRF).
+
+    Override either way with ``VIDEO_ENCODER=libx264`` / ``=h264_videotoolbox``
+    in the env — useful for benchmarking or when ffmpeg lacks VideoToolbox.
+
+    The function returns a list of ffmpeg arguments meant to splice straight
+    into a Popen/run argv, e.g.::
+
+        cmd = [FFMPEG, "-y", "-i", "-", *pick_video_encoder(CFG["video"]),
+               "-movflags", "+faststart", out]
+    """
+    forced = os.environ.get("VIDEO_ENCODER", "").strip().lower()
+    encoder = config.get("encoder", "libx264")
+    if forced:
+        encoder = forced
+    elif platform.system() == "Darwin" and platform.machine() == "arm64" and encoder == "libx264":
+        encoder = "h264_videotoolbox"
+
+    pix_fmt = config.get("pix_fmt", "yuv420p")
+
+    if encoder == "h264_videotoolbox":
+        # Hardware encoder: tune via bitrate target instead of CRF.
+        # 8 Mbps is overkill for 1080p talking-head but file size is still
+        # small (~6-8 MB for 60s) and it leaves room for fast-cut B-roll
+        # without artifacting.
+        bitrate = os.environ.get("VIDEOTOOLBOX_BITRATE", "8M")
+        return [
+            "-c:v",
+            "h264_videotoolbox",
+            "-b:v",
+            bitrate,
+            "-pix_fmt",
+            pix_fmt,
+        ]
+
+    # Software encoder (libx264): keep the preset/crf tunables from config.
+    preset = config.get("preset", "slow")
+    crf = str(config.get("crf", 18))
+    return [
+        "-c:v",
+        encoder,
+        "-preset",
+        preset,
+        "-crf",
+        crf,
+        "-pix_fmt",
+        pix_fmt,
+    ]
