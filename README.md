@@ -260,11 +260,17 @@ Built with [Claude Code](https://claude.com/claude-code).
 
 ## Docs at a glance
 
+**For pastors / non-technical users:**
 - **[FAQ](docs/FAQ.md)** — pastor-friendly answers: cost, languages, privacy, what works
+- **[Use cases](docs/USE_CASES.md)** — three concrete workflows (Sunday sermon, series, conference)
 - **[Privacy](docs/PRIVACY.md)** — what data leaves your machine (spoiler: by default, almost nothing)
 - **[Troubleshooting](docs/TROUBLESHOOTING.md)** — common errors with fixes
+- **[Glossary](docs/GLOSSARY.md)** — plain-language definitions for terms you'll see
+
+**For installers / curious devs:**
 - **[Install](docs/INSTALL.md)** — system deps + verify
 - **[Pipeline](docs/PIPELINE.md)** — what each script does, step by step
+- **[Style](docs/STYLE.md)** — subtitle font/color/branding
 
 ---
 

@@ -264,11 +264,17 @@ Construido con [Claude Code](https://claude.com/claude-code).
 
 ## Documentación rápida
 
+**Para pastor / usuario no-técnico:**
 - **[FAQ](docs/FAQ.es.md)** — respuestas para pastor: costo, idiomas, privacidad, qué funciona
+- **[Casos de uso](docs/USE_CASES.es.md)** — tres flujos concretos (sermón dominical, serie, conferencia)
 - **[Privacidad](docs/PRIVACY.es.md)** — qué datos salen de tu máquina (spoiler: por defecto, casi nada)
 - **[Troubleshooting](docs/TROUBLESHOOTING.es.md)** — errores comunes con solución
+- **[Glosario](docs/GLOSSARY.es.md)** — definiciones en lenguaje directo de los términos que verás
+
+**Para instalador / dev curioso:**
 - **[Instalación](docs/INSTALL.es.md)** — deps de sistema + verificar
 - **[Pipeline](docs/PIPELINE.es.md)** — qué hace cada script, paso a paso
+- **[Style](docs/STYLE.es.md)** — fuente/color/marca del subtítulo
 
 ---
 
