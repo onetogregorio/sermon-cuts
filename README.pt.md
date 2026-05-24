@@ -191,7 +191,8 @@ Construído com apoio de organizações investindo em ferramentas que servem a
 igreja e os criadores de conteúdo cristão.
 
 <!-- SPONSORS:START -->
-- **Midvash** — _TODO: URL + descrição curta_
+- **[Midvash](https://midvash.com/pt-br)** — Bíblia online com IA · 9 idiomas,
+  70 versões da Bíblia, busca semântica e ferramentas de estudo movidas a modelos de linguagem.
 - **MinhaIgreja** — _TODO: URL + descrição curta_
 <!-- SPONSORS:END -->
 
