@@ -60,16 +60,24 @@ jobs:
       - name: Run unit tests
         run: python -m pytest tests/ -v
 
-      - name: Validate force_style.txt parses
+      - name: Validate every style preset parses
         run: |
           python - <<'PY'
-          txt = open("config/force_style.txt").read().strip()
-          pairs = [p.strip() for p in txt.split(",") if p.strip()]
+          # Every config/style_presets/*.txt is a libass force_style string.
+          # Confirm each one has the keys downstream scripts depend on.
+          from pathlib import Path
           required = {"FontName", "FontSize", "PrimaryColour", "OutlineColour",
                       "Alignment", "MarginV"}
-          keys = {p.split("=")[0] for p in pairs}
-          missing = required - keys
-          if missing:
-              raise SystemExit(f"force_style.txt missing keys: {missing}")
-          print("force_style.txt OK")
+          presets = sorted(Path("config/style_presets").glob("*.txt"))
+          if not presets:
+              raise SystemExit("no presets found in config/style_presets/")
+          for preset_path in presets:
+              txt = preset_path.read_text().strip()
+              pairs = [p.strip() for p in txt.split(",") if p.strip()]
+              keys = {p.split("=")[0] for p in pairs}
+              missing = required - keys
+              if missing:
+                  raise SystemExit(f"{preset_path.name} missing keys: {missing}")
+              print(f"  ✓ {preset_path.name}")
+          print(f"all {len(presets)} preset(s) OK")
           PY
