@@ -26,6 +26,16 @@ usage() {
 # Short-circuit subcommands that don't need arg parsing.
 case "${1:-}" in
   doctor)  exec $PY "$SCRIPTS/doctor.py" ;;
+  review)
+    shift
+    [[ $# -eq 0 ]] && { echo "usage: pipeline.sh review <slug>"; exit 1; }
+    # review.py prints the chosen render command to stdout when the user
+    # hits ENTER, then we eval it. If the user cancels (q/ESC) or marks
+    # nothing, review.py exits non-zero and we stop here.
+    CMD=$($PY "$SCRIPTS/review.py" "$1") || exit $?
+    echo "→ executando: $CMD"
+    exec bash -c "$CMD"
+    ;;
 esac
 
 MODE="ingest_propose"

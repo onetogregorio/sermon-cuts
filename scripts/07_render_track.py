@@ -51,6 +51,13 @@ FORCE_STYLE = (SKILL_ROOT / "config/force_style.txt").read_text().strip()
 MP_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.task"
 MP_MODEL_PATH = SKILL_ROOT / "config" / "blaze_face_short_range.task"
 
+# Pose landmarker — used as a fallback when face detection misses, e.g.,
+# when the preacher looks down to read the Bible or turns away briefly.
+# The "lite" variant is ~10MB and runs at the same 2-fps sampling cadence
+# we use for face detection, so the extra cost is negligible.
+MP_POSE_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task"
+MP_POSE_PATH = SKILL_ROOT / "config" / "pose_landmarker_lite.task"
+
 
 def _ensure_mediapipe_model() -> Path:
     if MP_MODEL_PATH.exists():
@@ -62,21 +69,90 @@ def _ensure_mediapipe_model() -> Path:
     return MP_MODEL_PATH
 
 
+def _ensure_pose_model() -> Path:
+    if MP_POSE_PATH.exists():
+        return MP_POSE_PATH
+    import urllib.request
+
+    print("  [first run] downloading mediapipe pose_landmarker model...", file=sys.stderr)
+    urllib.request.urlretrieve(MP_POSE_URL, MP_POSE_PATH)
+    return MP_POSE_PATH
+
+
+def _make_pose_detector():
+    """Best-effort. Returns the pose landmarker or None if the import path
+    or model download fails (e.g., offline) — caller treats None as 'no
+    body-pose fallback available'."""
+    try:
+        from mediapipe.tasks import python as mp_python
+        from mediapipe.tasks.python import vision as mp_vision
+
+        model_path = _ensure_pose_model()
+        options = mp_vision.PoseLandmarkerOptions(
+            base_options=mp_python.BaseOptions(model_asset_path=str(model_path)),
+            running_mode=mp_vision.RunningMode.IMAGE,
+            num_poses=1,
+            min_pose_detection_confidence=0.4,
+        )
+        return mp_vision.PoseLandmarker.create_from_options(options)
+    except Exception as e:
+        print(f"  [warn] pose landmarker init failed ({e}); face-only", file=sys.stderr)
+        return None
+
+
+def _pose_centerpoint_x(pose_result, frame_w: int) -> float | None:
+    """Read the landmarks for shoulders (indices 11 = left, 12 = right) and
+    return the horizontal midpoint, normalized * frame_w. None when no pose
+    is detected.
+
+    Shoulders give a much more stable centerpoint than nose/face when the
+    speaker is looking down or has their head turned to one side — the
+    torso barely moves while the head can pitch/yaw a lot."""
+    if not pose_result.pose_landmarks:
+        return None
+    lms = pose_result.pose_landmarks[0]
+    if len(lms) <= 12:
+        return None
+    left = lms[11]
+    right = lms[12]
+    # MediaPipe normalizes to [0, 1] in image coordinates.
+    midpoint_norm = (left.x + right.x) / 2.0
+    return midpoint_norm * frame_w
+
+
 def sample_face_positions(
     src: Path, seg_start: float, seg_end: float, src_w: int, src_h: int
 ) -> list[tuple[float, float]]:
-    """Return [(t_abs, cx_src)] sampled at SAMPLE_FPS using MediaPipe BlazeFace
-    (new Tasks API). Falls back to OpenCV Haar if MediaPipe fails to load."""
+    """Return [(t_abs, cx_src)] sampled at SAMPLE_FPS.
+
+    Detection cascade (per sample, in order):
+      1. MediaPipe BlazeFace short-range. Picks the largest detected face.
+      2. MediaPipe Pose Landmarker. Uses shoulder midpoint when no face
+         is found — useful when the preacher looks down to read the Bible
+         or turns their head away from camera.
+      3. OpenCV Haar cascade. Final fallback when MediaPipe fails to load
+         (e.g., on a system where the model download didn't make it).
+      4. ``last_cx``. If everything fails for this sample, hold the most
+         recent position so the trajectory doesn't jump back to center.
+
+    Going through this whole cascade per sample is cheap because we only
+    sample at TRK["sample_fps"] (2 fps default), and the pose detector
+    bails fast when no person is in frame.
+    """
     import cv2
 
     samples: list[tuple[float, float]] = []
     last_cx = src_w / 2.0
+    n_face = 0
+    n_pose = 0
+    n_haar = 0
+    n_hold = 0
 
     detector = None
+    pose_detector = None
     use_mediapipe = TRK.get("detector", "mediapipe") == "mediapipe"
     if use_mediapipe:
         try:
-            import mediapipe as mp
             from mediapipe.tasks import python as mp_python
             from mediapipe.tasks.python import vision as mp_vision
 
@@ -90,6 +166,10 @@ def sample_face_positions(
         except Exception as e:
             print(f"  [warn] MediaPipe init failed ({e}), falling back to Haar", file=sys.stderr)
             detector = None
+        # Pose only worth initializing if face detector is up — without face,
+        # we'd lean on Haar (no pose involved) for the cascade.
+        if detector is not None:
+            pose_detector = _make_pose_detector()
 
     haar = None
     if detector is None:
@@ -103,6 +183,8 @@ def sample_face_positions(
         ok, frame = cap.read()
         if not ok:
             break
+
+        found = False
         if detector is not None:
             import mediapipe as mp
 
@@ -115,6 +197,17 @@ def sample_face_positions(
                 )
                 bb = best.bounding_box
                 last_cx = float(bb.origin_x + bb.width / 2.0)
+                n_face += 1
+                found = True
+            elif pose_detector is not None:
+                # Face missed → try pose. Shoulder midpoint is a stable
+                # centerpoint when the head is down/turned.
+                pose_result = pose_detector.detect(mp_img)
+                pose_cx = _pose_centerpoint_x(pose_result, src_w)
+                if pose_cx is not None:
+                    last_cx = pose_cx
+                    n_pose += 1
+                    found = True
         else:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             faces = haar.detectMultiScale(
@@ -126,11 +219,25 @@ def sample_face_positions(
             if len(faces) > 0:
                 x, y, w, h = max(faces, key=lambda f: f[2] * f[3])
                 last_cx = x + w / 2.0
+                n_haar += 1
+                found = True
+
+        if not found:
+            n_hold += 1
         samples.append((t, last_cx))
         t += dt
     cap.release()
     if detector is not None:
         detector.close()
+    if pose_detector is not None:
+        pose_detector.close()
+
+    total = max(1, n_face + n_pose + n_haar + n_hold)
+    print(
+        f"  tracking source: face={n_face} pose={n_pose} haar={n_haar} "
+        f"hold-last={n_hold} (of {total})",
+        file=sys.stderr,
+    )
     return samples
 
 

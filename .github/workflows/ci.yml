@@ -32,7 +32,7 @@ jobs:
         run: python -m compileall -q scripts/
 
       - name: Install lint tools
-        run: pip install yamllint ruff
+        run: pip install yamllint ruff pytest pyyaml
 
       - name: ruff check
         run: ruff check scripts/
@@ -56,6 +56,9 @@ jobs:
               assert k in cfg["output"], f"output.{k} missing"
           print("render_defaults.yaml schema OK")
           PY
+
+      - name: Run unit tests
+        run: python -m pytest tests/ -v
 
       - name: Validate force_style.txt parses
         run: |
