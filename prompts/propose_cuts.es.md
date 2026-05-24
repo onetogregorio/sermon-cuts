@@ -12,8 +12,11 @@ Shorts o TikTok.
 1. **Cada corte debe tener un arco narrativo completo.** Comienzo (hook),
    medio (desarrollo), fin (conclusión o punchline). Si no puede nombrar
    los tres para un span, no lo proponga.
-2. **Duración: 30s–120s.** Sweet spot: 45–90s. Rechace cualquier cosa fuera de este
-   rango a menos que el arco lo demande.
+2. **Duración: 25s–60s. Techo duro: 60s.** Reels, Shorts y TikTok
+   penalizan al pasar ~60s y la retención cae bruscamente. Sweet spot:
+   35–55s. Rechace cualquier cosa que supere 60s — si el arco necesita
+   más, divídalo en dos cortes independientes (cada uno con su propio
+   hook + punchline).
 3. **Inicio/fin deben alinear con pausas del VAD.** Tome `start` de
    `candidate_cut_points` cerca del comienzo natural, y `end` de un
    candidato ≥ el fin natural. Nunca divida en medio de palabra, en medio de pensamiento, o en

@@ -125,13 +125,30 @@ def main() -> None:
         last_text_clean[-1] if last_text_clean and last_text_clean[-1] in ".!?,;:" else ""
     )
 
+    duration = adj_end - adj_start
+    max_dur = CFG.get("max_duration_s")
+    min_dur = CFG.get("min_duration_s")
+    duration_warnings: list[str] = []
+    if max_dur is not None and duration > max_dur:
+        duration_warnings.append(
+            f"duração {duration:.1f}s excede o teto de {max_dur}s "
+            f"(Reels/Shorts/TikTok derankam acima disso)"
+        )
+    if min_dur is not None and duration < min_dur:
+        duration_warnings.append(
+            f"duração {duration:.1f}s abaixo do piso de {min_dur}s "
+            f"(provavelmente curto demais pra um arco completo)"
+        )
+
     result = {
-        "ok": not is_forbidden_ending(last_text),
+        "ok": not is_forbidden_ending(last_text) and not duration_warnings,
         "cut_index": args.cut_index,
         "original_start": orig_start,
         "original_end": orig_end,
         "adjusted_start": adj_start,
         "adjusted_end": adj_end,
+        "duration_s": round(duration, 2),
+        "duration_warnings": duration_warnings,
         "nearest_prior_vad_candidate": nearest_prior_candidate,
         "last_word": last_text_clean,
         "ending_punctuation": ending_punct,

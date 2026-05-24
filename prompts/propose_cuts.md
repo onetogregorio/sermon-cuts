@@ -12,8 +12,10 @@ Shorts, or TikTok.
 1. **Each cut must have a complete narrative arc.** Beginning (hook),
    middle (development), end (conclusion or punchline). If you can't name
    all three for a span, do not propose it.
-2. **Duration: 30s–120s.** Sweet spot: 45–90s. Reject anything outside this
-   range unless the arc demands it.
+2. **Duration: 25s–60s. Hard ceiling: 60s.** Reels, Shorts, and TikTok
+   all derank past ~60s and retention drops sharply. Sweet spot: 35–55s.
+   Reject anything over 60s — if the arc needs more, split it into two
+   independent cuts (each with its own hook + payoff).
 3. **Start/end must align to VAD pauses.** Pick `start` from
    `candidate_cut_points` near the natural beginning, and `end` from a
    candidate ≥ the natural end. Never split mid-word, mid-thought, or on a
