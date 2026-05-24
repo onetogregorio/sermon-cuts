@@ -1,0 +1,9 @@
+# CODEOWNERS — review approvers for protected paths.
+#
+# Lines further down the file take precedence. GitHub requires the listed
+# users to approve a PR before it can merge into a branch where "Require
+# review from Code Owners" is on. See README of branch-protection setup
+# in CONTRIBUTING.md.
+
+# Default: everything in the repo requires the maintainer's approval.
+*       @onetogregorio
