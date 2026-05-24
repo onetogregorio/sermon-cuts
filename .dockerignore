@@ -1,0 +1,16 @@
+.git/
+.github/
+.venv*/
+__pycache__/
+*.pyc
+*.pyo
+.pre-commit-config.yaml
+ruff.toml
+CLAUDE.md
+memory/messages/
+examples/sample_cuts/
+site/
+docs/
+tests/
+*.log
+.DS_Store
