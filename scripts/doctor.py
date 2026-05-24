@@ -162,6 +162,19 @@ def check_groq_key() -> None:
     )
 
 
+def check_local_whisper() -> None:
+    try:
+        import faster_whisper  # noqa: F401
+
+        ok("faster-whisper", "instalado (--provider=local disponível)")
+    except ImportError:
+        warn(
+            "faster-whisper",
+            "não instalado (opcional). Sem ele --provider=local não funciona — "
+            "instale com `pip install faster-whisper` se quiser transcrição offline.",
+        )
+
+
 def check_skill_symlinks() -> None:
     expected = ["scripts", "config", "prompts", "SKILL.md"]
     if not SKILL_ROOT.exists():
@@ -207,6 +220,7 @@ def main() -> None:
     section("Optional but recommended")
     check_outfit_font()
     check_groq_key()
+    check_local_whisper()
     check_platform_encoder()
 
     print()

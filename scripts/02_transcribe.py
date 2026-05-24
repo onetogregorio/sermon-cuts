@@ -250,6 +250,83 @@ def transcribe_groq(src: Path, language: str) -> dict:
     }
 
 
+# ─── faster-whisper (local) provider ───────────────────────────────────────
+
+
+def transcribe_local(src: Path, language: str, model_size: str) -> dict:
+    """Transcribe via faster-whisper running locally — no API key required.
+
+    Model files are cached in ``~/.cache/sermon-cuts/whisper/<size>``. First
+    run downloads ~1.5 GB for large-v3 and ~500 MB for medium; subsequent
+    runs reuse the cache.
+
+    On Apple Silicon faster-whisper uses CTranslate2 with Metal acceleration
+    when available — large-v3 runs at about 1× realtime, medium at ~3×.
+    On Linux/CUDA it goes faster still; on a CPU-only Linux box, drop
+    ``--model-size medium`` (or smaller) to keep latency reasonable.
+
+    Output shape is identical to the Groq path, so downstream scripts
+    don't care which provider was used.
+    """
+    try:
+        from faster_whisper import WhisperModel
+    except ImportError:
+        fail(
+            "faster-whisper não está instalado",
+            hint="rode `pip install faster-whisper` no venv da skill. "
+            "Alternativa: use --provider=youtube (grátis) ou --provider=groq (chave API).",
+            url="https://github.com/SYSTRAN/faster-whisper",
+        )
+
+    cache_dir = Path.home() / ".cache/sermon-cuts/whisper"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    # Compute type pick: float16 on Apple Silicon / CUDA-capable; otherwise int8
+    # which is the most portable and still respectable quality. faster-whisper
+    # falls back automatically when the requested type isn't supported.
+    import platform
+
+    if platform.system() == "Darwin" and platform.machine() == "arm64":
+        compute_type = "int8_float32"
+        device = "auto"
+    else:
+        compute_type = "int8"
+        device = "auto"
+
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        wav = Path(tmp.name)
+    try:
+        print(
+            f"  extracting mono16k audio + loading model={model_size} ({compute_type})...",
+            file=sys.stderr,
+        )
+        _extract_audio(src, wav)
+        model = WhisperModel(
+            model_size, device=device, compute_type=compute_type, download_root=str(cache_dir)
+        )
+        print("  transcribing locally (this can take a few minutes)...", file=sys.stderr)
+        segments, info = model.transcribe(
+            str(wav), language=language, word_timestamps=True, vad_filter=False
+        )
+        raw_words: list[dict] = []
+        for seg in segments:
+            if not seg.words:
+                continue
+            for w in seg.words:
+                text = (w.word or "").strip()
+                if not text:
+                    continue
+                raw_words.append({"start": float(w.start), "end": float(w.end), "text": text})
+    finally:
+        wav.unlink(missing_ok=True)
+
+    return {
+        "words": _to_scribe_shape(raw_words),
+        "language": info.language or language,
+        "_provider": f"faster-whisper-{model_size}",
+    }
+
+
 # ─── shared post-processing ────────────────────────────────────────────────
 
 
@@ -272,11 +349,55 @@ def _to_scribe_shape(raw_words: list[dict]) -> list[dict]:
 # ─── main ──────────────────────────────────────────────────────────────────
 
 
+def _auto_pick_provider(meta: dict) -> str:
+    """Provider selection when --provider isn't passed.
+
+    Order of preference, in keeping with "best available quality without
+    asking the user to set anything up":
+
+      1. groq    — if GROQ_API_KEY is exported or in ~/.env (best accuracy)
+      2. local   — if faster-whisper imports successfully (offline, premium)
+      3. youtube — if the source was ingested from a YouTube URL (no key,
+                   auto-captions, lowest accuracy but instant)
+      4. error   — local source with no Groq key and no faster-whisper
+
+    Doctor reports which path is active.
+    """
+    load_env()  # populate from ~/.env so the GROQ key check is honest
+    if os.environ.get("GROQ_API_KEY"):
+        return "groq"
+    try:
+        import faster_whisper  # noqa: F401
+
+        return "local"
+    except ImportError:
+        pass
+    if meta.get("source_type") == "youtube" and meta.get("url"):
+        return "youtube"
+    fail(
+        "nenhum provider de transcrição disponível",
+        hint="opções: (a) `pip install faster-whisper` no venv pra rodar local, "
+        "(b) `GROQ_API_KEY=gsk_...` no ~/.env, ou "
+        "(c) ingerir o source como URL do YouTube pra usar auto-captions.",
+        url="https://console.groq.com/keys",
+    )
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("slug")
-    ap.add_argument("--provider", choices=["youtube", "groq"], default="youtube")
+    ap.add_argument(
+        "--provider",
+        choices=["youtube", "groq", "local", "auto"],
+        default="auto",
+        help="auto → groq if key set, else local if faster-whisper installed, else youtube",
+    )
     ap.add_argument("--language", default="pt")
+    ap.add_argument(
+        "--model-size",
+        default="large-v3",
+        help="faster-whisper model name when --provider=local (e.g. medium, large-v3)",
+    )
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
 
@@ -294,7 +415,12 @@ def main() -> None:
 
     meta = json.loads((msg_dir / "meta.json").read_text())
 
-    if args.provider == "youtube":
+    provider = args.provider
+    if provider == "auto":
+        provider = _auto_pick_provider(meta)
+        print(f"  [auto] picked provider={provider}", file=sys.stderr)
+
+    if provider == "youtube":
         if meta.get("source_type") != "youtube" or not meta.get("url"):
             fail(
                 "--provider=youtube precisa de um source vindo do YouTube",
@@ -303,7 +429,9 @@ def main() -> None:
             )
         with tempfile.TemporaryDirectory() as td:
             payload = transcribe_youtube(meta["url"], args.language, Path(td))
-    else:
+    elif provider == "local":
+        payload = transcribe_local(src, args.language, args.model_size)
+    else:  # groq
         payload = transcribe_groq(src, args.language)
 
     payload["_schema_version"] = SCHEMA_VERSION
