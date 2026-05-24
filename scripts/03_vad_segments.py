@@ -21,10 +21,12 @@ audio doesn't snap mid-breath.
 from __future__ import annotations
 import argparse, json, subprocess, sys, tempfile
 from pathlib import Path
+import yaml
 
 SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
 MESSAGES = SKILL_ROOT / "memory/messages"
-FFMPEG = "/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg"
+CFG = yaml.safe_load((SKILL_ROOT / "config/render_defaults.yaml").read_text())
+FFMPEG = CFG.get("ffmpeg_bin") or "ffmpeg"
 
 
 def extract_wav_16k(src: Path, out: Path) -> None:

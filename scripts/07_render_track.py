@@ -30,7 +30,7 @@ import yaml
 SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
 MESSAGES = SKILL_ROOT / "memory/messages"
 CFG = yaml.safe_load((SKILL_ROOT / "config/render_defaults.yaml").read_text())
-FFMPEG = CFG["ffmpeg_bin"]
+FFMPEG = CFG.get("ffmpeg_bin") or "ffmpeg"
 OUT_W = CFG["output"]["width"]
 OUT_H = CFG["output"]["height"]
 OUT_FPS = CFG["output"]["fps"]
