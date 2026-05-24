@@ -130,13 +130,27 @@ def build_srt(
         prev_end = w["end"]
     flush()
 
-    # Function-word shift (keep last chunk intact — don't shift its trailing function word)
-    for i in range(len(chunks) - 2):
+    # Function-word shift: don't end a cue on "para", "que", "com", "de"…
+    # — pull the trailing function word into the next cue so the line break
+    # lands at a semantic boundary instead of mid-phrase.
+    #
+    # Three bugs we had to fix here, each surfaced by auditing real renders:
+    #   1. range(len(chunks) - 2) skipped the second-to-last cue (off-by-one).
+    #      Only the very last cue should be untouchable — fixed to -1.
+    #   2. ``len(chunks[i]) <= 2`` refused to shift out of 3-word cues, which
+    #      is exactly the most common case (e.g. "levantando peso para").
+    #      Lowered to <= 1 — a single word stays put, everything else flows.
+    #   3. The MAX_CHARS guard blocked legitimate shifts whenever the receiving
+    #      cue was anywhere near the budget. Relaxed to allow a function-word
+    #      shift to overflow by ~25% (1 cue line widening from 20→25 chars is
+    #      far less ugly than that same cue ending on "para").
+    max_overflow = int(MAX_CHARS * 1.25)
+    for i in range(len(chunks) - 1):
         while chunks[i] and _is_function(chunks[i][-1].get("text") or ""):
-            if len(chunks[i]) <= 2:
+            if len(chunks[i]) <= 1:
                 break
             shifted_text = (chunks[i][-1].get("text") or "").strip()
-            if _chunk_chars(chunks[i + 1]) + 1 + len(shifted_text) > MAX_CHARS:
+            if _chunk_chars(chunks[i + 1]) + 1 + len(shifted_text) > max_overflow:
                 break
             shifted = chunks[i].pop()
             chunks[i + 1].insert(0, shifted)
