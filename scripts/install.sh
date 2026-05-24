@@ -164,31 +164,55 @@ else
   fi
 fi
 
-# ─── optional: Outfit font ────────────────────────────────────────────────
-say "7. Fonte Outfit Black (opcional, brand style)"
-FONT_INSTALLED=0
-for p in "$HOME/Library/Fonts/Outfit-Black.ttf" \
-         "/Library/Fonts/Outfit-Black.ttf" \
-         "$HOME/.local/share/fonts/Outfit-Black.ttf"; do
-  [[ -f "$p" ]] && { FONT_INSTALLED=1; break; }
-done
-if [[ "$FONT_INSTALLED" -eq 1 ]]; then
-  ok "Outfit Black já instalada"
-elif ask "Baixar e instalar Outfit Black agora?"; then
-  TMP_DIR="$(mktemp -d)"
-  trap 'rm -rf "$TMP_DIR"' EXIT
-  curl -fsSL "https://fonts.google.com/download?family=Outfit" -o "$TMP_DIR/outfit.zip"
-  if [[ "$PLATFORM" == "macos" ]]; then
-    DEST="$HOME/Library/Fonts"
+# ─── subtitle font preset ────────────────────────────────────────────────
+say "7. Estilo de legenda — escolha uma fonte"
+note "Default é Arial Black (sistema, sem download). Outfit Black baixa do Google."
+echo "  1) arial-black     — Arial Black, universal (default)"
+echo "  2) helvetica-bold  — Helvetica Bold, mais limpo (macOS-native)"
+echo "  3) outfit-black    — Outfit Black, fonte display warm (requer download)"
+read -r -p "  ❯ escolha [1-3, default 1]: " font_choice
+case "${font_choice:-1}" in
+  1) PRESET="arial-black"; DOWNLOAD_OUTFIT=0 ;;
+  2) PRESET="helvetica-bold"; DOWNLOAD_OUTFIT=0 ;;
+  3) PRESET="outfit-black"; DOWNLOAD_OUTFIT=1 ;;
+  *) warn "opção inválida — usando arial-black"; PRESET="arial-black"; DOWNLOAD_OUTFIT=0 ;;
+esac
+ok "preset selecionado: $PRESET"
+
+# Patch the YAML to use the chosen preset. We use a tiny Python one-liner
+# because sed-on-YAML is fragile across platforms (BSD sed vs GNU sed).
+python3 - "$SERMON_CUTS_DIR/config/render_defaults.yaml" "$PRESET" <<'PY'
+import re, sys
+path, preset = sys.argv[1], sys.argv[2]
+text = open(path).read()
+new = re.sub(r"^(\s*preset:\s*)[a-z-]+", rf"\g<1>{preset}", text, count=1, flags=re.MULTILINE)
+open(path, "w").write(new)
+PY
+
+# Download Outfit only if the user picked outfit-black.
+if [[ "$DOWNLOAD_OUTFIT" -eq 1 ]]; then
+  FONT_INSTALLED=0
+  for p in "$HOME/Library/Fonts/Outfit-Black.ttf" \
+           "/Library/Fonts/Outfit-Black.ttf" \
+           "$HOME/.local/share/fonts/Outfit-Black.ttf"; do
+    [[ -f "$p" ]] && { FONT_INSTALLED=1; break; }
+  done
+  if [[ "$FONT_INSTALLED" -eq 1 ]]; then
+    ok "Outfit Black já instalada"
   else
-    DEST="$HOME/.local/share/fonts"
-    mkdir -p "$DEST"
+    TMP_DIR="$(mktemp -d)"
+    trap 'rm -rf "$TMP_DIR"' EXIT
+    curl -fsSL "https://fonts.google.com/download?family=Outfit" -o "$TMP_DIR/outfit.zip"
+    if [[ "$PLATFORM" == "macos" ]]; then
+      DEST="$HOME/Library/Fonts"
+    else
+      DEST="$HOME/.local/share/fonts"
+      mkdir -p "$DEST"
+    fi
+    unzip -oq "$TMP_DIR/outfit.zip" -d "$DEST"
+    [[ "$PLATFORM" == "linux" ]] && fc-cache -f "$DEST" >/dev/null 2>&1 || true
+    ok "Outfit Black instalada em $DEST"
   fi
-  unzip -oq "$TMP_DIR/outfit.zip" -d "$DEST"
-  [[ "$PLATFORM" == "linux" ]] && fc-cache -f "$DEST" >/dev/null 2>&1 || true
-  ok "Outfit instalada em $DEST"
-else
-  note "pulado. libass cai pra Helvetica/DejaVu (cortes renderizam, sem brand style)"
 fi
 
 # ─── final doctor ─────────────────────────────────────────────────────────

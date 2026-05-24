@@ -121,29 +121,80 @@ def check_python_deps() -> None:
         ok("Python deps", "todas as 7 importáveis")
 
 
-def check_outfit_font() -> None:
-    # Look on macOS user/system fonts, Linux ~/.local/share/fonts, fontconfig cache.
+def check_subtitle_preset() -> None:
+    """Report which subtitle style preset is active + whether the font it
+    asks for is actually installed."""
+    import os
+
+    import yaml
+
+    cfg_path = SKILL_ROOT / "config/render_defaults.yaml"
+    try:
+        cfg = yaml.safe_load(cfg_path.read_text())
+    except Exception:
+        bad("subtitle preset", f"could not read {cfg_path}")
+        return
+
+    preset_name = os.environ.get("SUBTITLE_PRESET") or cfg.get("subtitle", {}).get(
+        "preset", "arial-black"
+    )
+    preset_file = SKILL_ROOT / "config/style_presets" / f"{preset_name}.txt"
+    if not preset_file.exists():
+        bad("subtitle preset", f"preset '{preset_name}' não tem .txt em config/style_presets/")
+        return
+
+    style = preset_file.read_text().strip()
+    # Extract FontName= from the force_style string.
+    font_name = "(unknown)"
+    for pair in style.split(","):
+        if pair.startswith("FontName="):
+            font_name = pair.split("=", 1)[1]
+            break
+
+    # Probe whether the font is reachable. Arial Black / Helvetica are on
+    # virtually every system; Outfit needs manual install.
+    font_installed = _font_resolvable(font_name)
+    detail = f"preset={preset_name} font={font_name}"
+    if font_installed:
+        ok("subtitle preset", detail)
+    else:
+        warn(
+            f"subtitle preset ({detail})",
+            f"libass não vai achar '{font_name}' — vai cair pra system fallback. "
+            f"Pra instalar: https://fonts.google.com/specimen/{font_name.replace(' ', '+')}",
+        )
+
+
+def _font_resolvable(font_name: str) -> bool:
+    """Best-effort check that ``font_name`` is reachable by libass.
+
+    We check:
+      • obvious filesystem paths (macOS user/system fonts, Linux user fonts);
+      • ``fc-list`` when fontconfig is present.
+
+    System fonts like ``Arial Black`` and ``Helvetica`` won't show up as
+    .ttf files in user folders, so we treat them as available when fc-list
+    knows them OR when we just can't verify (assume the system has them).
+    """
+    # Filesystem first (covers manually-installed fonts like Outfit Black).
+    safe = font_name.replace(" ", "")
     candidates = [
-        Path.home() / "Library/Fonts/Outfit-Black.ttf",
-        Path("/Library/Fonts/Outfit-Black.ttf"),
-        Path.home() / ".local/share/fonts" / "Outfit-Black.ttf",
+        Path.home() / "Library/Fonts" / f"{font_name}.ttf",
+        Path.home() / "Library/Fonts" / f"{safe}.ttf",
+        Path.home() / "Library/Fonts" / f"{safe}-Black.ttf",
+        Path("/Library/Fonts") / f"{font_name}.ttf",
+        Path("/System/Library/Fonts") / f"{safe}.ttc",
+        Path.home() / ".local/share/fonts" / f"{font_name}.ttf",
     ]
     if any(p.exists() for p in candidates):
-        ok("Outfit Black font", "instalada")
-        return
-    # Try fc-list if available (Linux + brew fontconfig).
+        return True
     try:
         out = subprocess.check_output(["fc-list", ":family"], text=True, timeout=5)
-        if "Outfit" in out:
-            ok("Outfit Black font", "via fontconfig")
-            return
+        return font_name.lower() in out.lower()
     except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
-        pass
-    warn(
-        "Outfit Black font",
-        "não encontrada. Sem ela libass cai pra Helvetica/DejaVu (legenda renderiza, "
-        "mas não com o brand style). Baixe em https://fonts.google.com/specimen/Outfit",
-    )
+        # If fc-list isn't available, assume the font is system-resolvable
+        # (Arial Black and Helvetica ship on every supported OS).
+        return font_name.lower() in {"arial black", "helvetica", "helvetica bold"}
 
 
 def check_groq_key() -> None:
@@ -217,8 +268,10 @@ def main() -> None:
     section("Skill installation")
     check_skill_symlinks()
 
+    section("Subtitle style")
+    check_subtitle_preset()
+
     section("Optional but recommended")
-    check_outfit_font()
     check_groq_key()
     check_local_whisper()
     check_platform_encoder()

@@ -16,14 +16,36 @@ ASS subtitle color encoding (Aegisub/libass uses `&HAABBGGRR`):
 - `gold-warm` `PrimaryColour` = `&H0031C5FB`
 - `pure-black` `OutlineColour` = `&H00000000`
 
-## Typography
+## Typography — pick one of three presets
 
-- **Family:** Outfit
-- **Default weight:** 800 (Black)
-- **ASS FontName:** `Outfit` (libass picks the Black variant when `Bold=1`)
-- Fallback if Outfit is missing: Helvetica Bold
+The skill ships three subtitle-font presets. Choose one in
+`config/render_defaults.yaml` (`subtitle.preset`) or per-render via the
+`SUBTITLE_PRESET=<name>` env var.
 
-The skill assumes `Outfit` is available on the system (libass resolves it by name). If you need to point to a specific `.ttf` on your disk, override `font_path` in `config/render_defaults.yaml` or in `memory/messages/<slug>/overrides.yaml`.
+| Preset | Font | Availability | When to use |
+|---|---|---|---|
+| `arial-black` | **Arial Black** | macOS · Windows · Linux (Liberation Sans fallback) | **Default.** Universal, neutral, no download required. |
+| `helvetica-bold` | Helvetica Bold | macOS native; Linux falls back to DejaVu | Cleaner, slightly lighter weight than Arial Black. |
+| `outfit-black` | Outfit Black | Requires installing the font ([Google Fonts](https://fonts.google.com/specimen/Outfit)) | Warm display font. It's the brand style used on the project landing. |
+
+Every other `force_style` field (color, outline, margin) is identical across the three — only `FontName=` differs.
+
+**Switch quickly per render:**
+
+```bash
+SUBTITLE_PRESET=outfit-black ./scripts/pipeline.sh --render-cuts 1,2 --slug my_msg
+```
+
+**Switch permanently:** edit `config/render_defaults.yaml`:
+
+```yaml
+subtitle:
+  preset: helvetica-bold   # or arial-black, outfit-black
+```
+
+**Roll your own:** drop `config/style_presets/mybrand.txt` with the desired
+`force_style` string (libass ASS syntax), then set `subtitle.preset: mybrand`.
+See `config/style_presets/README.md` for syntax details.
 
 ## Subtitle rules
 
@@ -35,10 +57,10 @@ The skill assumes `Outfit` is available on the system (libass resolves it by nam
 - `MarginV`: **50** — subtitle at the footer. Above the Instagram/TikTok/Reels UI bar (which occupies ~150–180px at the bottom of a 1920 frame), but positioned as a classic footer, not floating in the middle of the chest.
 - Alignment: 2 (bottom center)
 
-## Reusable `force_style` string
+## Reusable `force_style` string (default `arial-black`)
 
 ```
-FontName=Outfit,FontSize=16,Bold=1,
+FontName=Arial Black,FontSize=16,Bold=1,
 PrimaryColour=&H0031C5FB,OutlineColour=&H00000000,BackColour=&H00000000,
 BorderStyle=1,Outline=0.8,Shadow=0,
 Alignment=2,MarginV=50

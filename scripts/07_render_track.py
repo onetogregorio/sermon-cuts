@@ -34,7 +34,7 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import fail, pick_video_encoder, resolve_ffmpeg
+from _common import fail, load_style_preset, pick_video_encoder, resolve_ffmpeg
 
 SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
 MESSAGES = SKILL_ROOT / "memory/messages"
@@ -45,7 +45,7 @@ OUT_H = CFG["output"]["height"]
 OUT_FPS = CFG["output"]["fps"]
 VID = CFG["video"]
 TRK = CFG["tracking"]
-FORCE_STYLE = (SKILL_ROOT / "config/force_style.txt").read_text().strip()
+FORCE_STYLE = load_style_preset(SKILL_ROOT, CFG.get("subtitle", {}))
 
 
 MP_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.task"

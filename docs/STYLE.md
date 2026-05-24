@@ -16,14 +16,34 @@ Codificação de cor ASS (Aegisub/libass usa `&HAABBGGRR`):
 - `gold-warm` `PrimaryColour` = `&H0031C5FB`
 - `pure-black` `OutlineColour` = `&H00000000`
 
-## Tipografia
+## Tipografia — escolha entre 3 presets
 
-- **Família:** Outfit
-- **Peso default:** 800 (Black)
-- **ASS FontName:** `Outfit` (libass escolhe a variante Black quando `Bold=1`)
-- Fallback se Outfit não estiver instalada: Helvetica Bold
+A skill vem com três presets de fonte pra legenda. Você escolhe um em
+`config/render_defaults.yaml` (`subtitle.preset`) ou via env var
+`SUBTITLE_PRESET=<nome>` por render.
 
-A skill assume que `Outfit` está disponível no sistema (libass resolve pelo nome). Se você precisa apontar um `.ttf` específico no seu disco, sobrescreva `font_path` em `config/render_defaults.yaml` ou em `memory/messages/<slug>/overrides.yaml`.
+| Preset | Fonte | Disponibilidade | Quando usar |
+|---|---|---|---|
+| `arial-black` | **Arial Black** | macOS · Windows · Linux (Liberation Sans fallback) | **Default.** Universal, neutra, sem download. |
+| `helvetica-bold` | Helvetica Bold | macOS native; Linux cai pra DejaVu | Mais limpa, peso ligeiramente menor que Arial Black. |
+| `outfit-black` | Outfit Black | Requer instalar a fonte ([Google Fonts](https://fonts.google.com/specimen/Outfit)) | Display warm. É o estilo da landing do projeto. |
+
+Outros campos do `force_style` (cor, outline, margem) são iguais nos três — só muda o `FontName=`.
+
+**Trocar de preset rapidinho:**
+
+```bash
+SUBTITLE_PRESET=outfit-black ./scripts/pipeline.sh --render-cuts 1,2 --slug minha_msg
+```
+
+**Trocar permanentemente:** edita `config/render_defaults.yaml`:
+
+```yaml
+subtitle:
+  preset: helvetica-bold   # ou arial-black, outfit-black
+```
+
+**Criar um preset próprio:** crie `config/style_presets/mybrand.txt` com a string `force_style` desejada (sintaxe libass ASS), depois aponte `subtitle.preset: mybrand` no YAML. Veja `config/style_presets/README.md` pros detalhes da sintaxe.
 
 ## Regras de legenda
 
@@ -35,10 +55,10 @@ A skill assume que `Outfit` está disponível no sistema (libass resolve pelo no
 - `MarginV`: **50** — legenda no rodapé. Acima da barra de UI do Instagram/TikTok/Reels (que ocupa ~150–180px do fundo num frame 1920), mas posicionada como rodapé clássico, não no meio do peito.
 - Alignment: 2 (centro inferior)
 
-## String `force_style` reusável
+## String `force_style` reusável (default `arial-black`)
 
 ```
-FontName=Outfit,FontSize=16,Bold=1,
+FontName=Arial Black,FontSize=16,Bold=1,
 PrimaryColour=&H0031C5FB,OutlineColour=&H00000000,BackColour=&H00000000,
 BorderStyle=1,Outline=0.8,Shadow=0,
 Alignment=2,MarginV=50

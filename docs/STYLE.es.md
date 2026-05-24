@@ -16,14 +16,34 @@ Codificación de color ASS (Aegisub/libass usa `&HAABBGGRR`):
 - `gold-warm` `PrimaryColour` = `&H0031C5FB`
 - `pure-black` `OutlineColour` = `&H00000000`
 
-## Tipografía
+## Tipografía — elige entre 3 presets
 
-- **Familia:** Outfit
-- **Peso default:** 800 (Black)
-- **ASS FontName:** `Outfit` (libass elige la variante Black cuando `Bold=1`)
-- Fallback si Outfit no está instalada: Helvetica Bold
+El skill viene con tres presets de fuente para subtítulo. Eliges uno en
+`config/render_defaults.yaml` (`subtitle.preset`) o via env var
+`SUBTITLE_PRESET=<nombre>` por render.
 
-El skill asume que `Outfit` está disponible en el sistema (libass la resuelve por nombre). Si necesitas apuntar a un `.ttf` específico en tu disco, sobreescribe `font_path` en `config/render_defaults.yaml` o en `memory/messages/<slug>/overrides.yaml`.
+| Preset | Fuente | Disponibilidad | Cuándo usar |
+|---|---|---|---|
+| `arial-black` | **Arial Black** | macOS · Windows · Linux (fallback Liberation Sans) | **Default.** Universal, neutra, sin descarga. |
+| `helvetica-bold` | Helvetica Bold | macOS nativo; Linux cae a DejaVu | Más limpia, peso ligeramente menor que Arial Black. |
+| `outfit-black` | Outfit Black | Requiere instalar la fuente ([Google Fonts](https://fonts.google.com/specimen/Outfit)) | Display warm. Es el estilo de marca de la landing del proyecto. |
+
+Los demás campos del `force_style` (color, outline, margen) son iguales en los tres — solo cambia `FontName=`.
+
+**Cambio rápido por render:**
+
+```bash
+SUBTITLE_PRESET=outfit-black ./scripts/pipeline.sh --render-cuts 1,2 --slug mi_msg
+```
+
+**Cambio permanente:** edita `config/render_defaults.yaml`:
+
+```yaml
+subtitle:
+  preset: helvetica-bold   # o arial-black, outfit-black
+```
+
+**Crear preset propio:** coloca `config/style_presets/mibrand.txt` con la string `force_style` deseada (sintaxis libass ASS), luego apunta `subtitle.preset: mibrand`. Ve `config/style_presets/README.md` para detalles de sintaxis.
 
 ## Reglas de subtítulo
 
@@ -35,10 +55,10 @@ El skill asume que `Outfit` está disponible en el sistema (libass la resuelve p
 - `MarginV`: **50** — subtítulo en el pie. Arriba de la barra de UI de Instagram/TikTok/Reels (que ocupa ~150–180px del fondo en un frame 1920), pero posicionado como pie clásico, no en medio del pecho.
 - Alignment: 2 (centro inferior)
 
-## String `force_style` reutilizable
+## String `force_style` reutilizable (default `arial-black`)
 
 ```
-FontName=Outfit,FontSize=16,Bold=1,
+FontName=Arial Black,FontSize=16,Bold=1,
 PrimaryColour=&H0031C5FB,OutlineColour=&H00000000,BackColour=&H00000000,
 BorderStyle=1,Outline=0.8,Shadow=0,
 Alignment=2,MarginV=50

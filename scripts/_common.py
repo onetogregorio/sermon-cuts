@@ -153,3 +153,50 @@ def pick_video_encoder(config: dict) -> list[str]:
         "-pix_fmt",
         pix_fmt,
     ]
+
+
+# ─── subtitle style preset selection ──────────────────────────────────────
+
+
+def load_style_preset(skill_root: Path, subtitle_cfg: dict) -> str:
+    """Resolve the libass ``force_style`` string for the burn-in pass.
+
+    Lookup order (first match wins):
+      1. ``SUBTITLE_PRESET`` env var — quick per-render override without
+         touching any file. Useful for the dogfooding/branded workflow:
+         ``SUBTITLE_PRESET=outfit-black ./pipeline.sh ...``
+      2. ``config/force_style.txt`` if present — advanced override that
+         lets a power user pin a fully hand-tuned style.
+      3. ``config/style_presets/<preset>.txt`` where ``<preset>`` comes
+         from ``subtitle.preset`` in render_defaults.yaml (default
+         ``arial-black``).
+      4. ``config/style_presets/arial-black.txt`` as universal fallback.
+
+    The returned string is ready to splice into an ffmpeg ``-vf
+    "subtitles=...:force_style='<...>'"`` filter.
+    """
+    env_preset = os.environ.get("SUBTITLE_PRESET", "").strip()
+    if env_preset:
+        env_path = skill_root / "config" / "style_presets" / f"{env_preset}.txt"
+        if env_path.exists():
+            return env_path.read_text().strip()
+        # Fall through silently to lower-priority sources rather than failing —
+        # an unknown preset name shouldn't break a render.
+
+    legacy = skill_root / "config" / "force_style.txt"
+    if legacy.exists() and legacy.stat().st_size > 0:
+        return legacy.read_text().strip()
+
+    preset = (subtitle_cfg or {}).get("preset") or "arial-black"
+    preset_path = skill_root / "config" / "style_presets" / f"{preset}.txt"
+    if not preset_path.exists():
+        fallback = skill_root / "config" / "style_presets" / "arial-black.txt"
+        if fallback.exists():
+            return fallback.read_text().strip()
+        # Last-ditch hardcoded default so a misconfigured install still renders.
+        return (
+            "FontName=Arial Black,FontSize=16,Bold=1,"
+            "PrimaryColour=&H0031C5FB,OutlineColour=&H00000000,BackColour=&H00000000,"
+            "BorderStyle=1,Outline=0.8,Shadow=0,Alignment=2,MarginV=50"
+        )
+    return preset_path.read_text().strip()

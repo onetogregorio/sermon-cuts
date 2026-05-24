@@ -27,9 +27,15 @@ subtitle:
   min_words: 3
   max_words: 4
   max_chars: 20
-  # libass resolve "Outfit" pelo sistema. Sobrescreva com caminho absoluto
-  # (ex: /Users/<user>/Library/Fonts/Outfit-Black.ttf) se Outfit não estiver
-  # instalada globalmente ou se quiser forçar um arquivo específico.
+  # Which font preset to burn in. See config/style_presets/README.md for the
+  # full list. The default `arial-black` ships on macOS, Windows, and most
+  # Linux distros — no extra install needed.
+  #   arial-black     → Arial Black (universal default)
+  #   helvetica-bold  → Helvetica Bold (macOS-native, slightly lighter)
+  #   outfit-black    → Outfit Black (requires manual font install)
+  preset: arial-black
+  # Optional: force a specific .ttf path if libass can't find the font by name.
+  # Leave null to let libass resolve via fontconfig.
   font_path: null
 
 cut_validation:
