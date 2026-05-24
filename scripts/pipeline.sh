@@ -67,11 +67,13 @@ done
 # context:
 #   • TTY      → interactive review (y/n/edit/skip per suspect)
 #   • non-TTY  → 06b defaults to --agent-review when suspects exist, so
-#                the orchestrating agent (Claude Code, Cursor, …) gets
-#                the JSON report with cue context + transcript snippet
-#                and can apply Edit-tool fixes before pipeline.sh
-#                continues into 07_render_track. The JSON goes to the
-#                caller's stdout so the agent sees it directly.
+#                whichever AI coding agent is orchestrating the run
+#                (Claude Code, Cursor, Codex, Cline, Aider, Continue,
+#                Windsurf, …) gets the JSON report with cue context +
+#                transcript snippet and can apply file-edit fixes
+#                before pipeline.sh continues into 07_render_track.
+#                The JSON goes to the caller's stdout so the agent
+#                sees it directly.
 # To bypass entirely (CI without an agent, or after the SRT has already
 # been vetted), pass --skip-scrub.
 scrub() {
@@ -107,7 +109,7 @@ case "$MODE" in
     echo "→ [4/4] propose-cuts input ready"
     $PY "$SCRIPTS/04_propose_cuts.py" "$SLUG"
     echo
-    echo "Next: Claude reads propose_input.json + prompts/propose_cuts.md"
+    echo "Next: your AI editor reads propose_input.json + prompts/propose_cuts.md"
     echo "and writes memory/messages/$SLUG/cuts_proposed.json"
     ;;
 

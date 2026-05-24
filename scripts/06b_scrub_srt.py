@@ -28,9 +28,11 @@ Three review paths beyond the rules:
   • **--agent-review** (default in non-TTY when there are suspects).
     Emits a structured JSON with prev/next cue context, word-level
     transcript snippet around each suspect, and a path to
-    ``prompts/scrub_srt.md`` so an orchestrating agent (Claude Code,
-    Cursor, …) can read the report, edit the SRT via its editor
-    tool, and resume the pipeline with ``--skip-scrub``.
+    ``prompts/scrub_srt.md`` so whichever AI coding agent is
+    orchestrating the run (Claude Code, Cursor, Codex, Cline, Aider,
+    Continue, Windsurf, …) can read the report, edit the SRT via the
+    file-edit tool its runtime exposes, and resume the pipeline with
+    ``--skip-scrub``.
 
   • **--use-llm** — calls Anthropic Claude (preferred via
     ANTHROPIC_API_KEY) or Groq Llama (fallback via GROQ_API_KEY)
@@ -752,9 +754,10 @@ def main() -> None:
     #   1. explicit flag (--agent-review, --use-llm, --auto-apply, --dry-run)
     #   2. TTY + stdin attached → interactive
     #   3. non-TTY with rule_suspects → default to --agent-review so the
-    #      orchestrating agent (Claude Code, etc.) gets to revise instead
-    #      of silently auto-applying. Lets pipeline.sh route review through
-    #      the agent loop without changing its caller.
+    #      orchestrating AI agent (whichever — Claude Code, Cursor, Codex,
+    #      Cline, …) gets to revise instead of silently auto-applying.
+    #      Lets pipeline.sh route review through the agent loop without
+    #      changing its caller.
     #   4. non-TTY with no suspects → behave like --dry-run (no-op).
     explicit = args.agent_review or args.use_llm or args.auto_apply or args.dry_run
     interactive = _TTY and sys.stdin.isatty() and not explicit
@@ -865,9 +868,11 @@ def main() -> None:
             "suspects": all_suspects,
             "applied_count": applied_count,
             "next_action": (
-                "agent should read prompt_path, then for each suspect with applied=false "
-                "apply an Edit to srt_path. Run pipeline.sh --render-cut N --slug <slug> "
-                "--skip-scrub when done."
+                "agent should read prompt_path (system message), then for each "
+                "suspect with applied=false apply a file-edit to srt_path using "
+                "whichever edit tool the runtime exposes (Edit / edit_file / "
+                "apply_patch / write_to_file / etc.). Run pipeline.sh "
+                "--render-cut N --slug <slug> --skip-scrub when done."
             ),
         }
     else:

@@ -2,6 +2,14 @@
 
 [English](scrub_srt.md) · **Português** · [Español](scrub_srt.es.md)
 
+> **Pra quem é esse prompt.** Esse prompt é system message pra *qualquer*
+> agente de IA com que o usuário esteja rodando o pipeline — Claude Code,
+> Cursor, Codex CLI, Cline, Aider, Continue, Windsurf, OpenCode, Zed
+> agent, ou qualquer coisa que leia JSON e edite texto. Onde o prompt
+> falar "tool de editar arquivo", use a que o seu runtime expõe (Edit no
+> Claude Code, edit_file no Cursor, apply_patch no Codex, write_to_file
+> no Cline, etc.).
+
 Você está revisando um SRT brand-style em português que o `06_build_srt.py`
 gerou a partir do transcript word-level. O `06b_scrub_srt.py --agent-review`
 escaneou esse SRT e emitiu um JSON listando **suspeitos** — cues que
@@ -9,8 +17,8 @@ provavelmente precisam de fix antes do `07_render_track.py` queimar elas
 no MP4 final.
 
 Sua tarefa: pra cada suspeito, decidir o que fazer, e aplicar o fix
-direto no arquivo SRT via tool de editor. Depois o pipeline retoma o
-render.
+direto no arquivo SRT via a tool de editar arquivo que o seu runtime
+fornece. Depois o pipeline retoma o render.
 
 ## Input que você recebe
 
@@ -112,12 +120,12 @@ relatório com `applied: true` pra transparência, sem precisar fazer nada.
 
 Pra cada `suspect` com `applied: false`:
 
-1. Leia o `srt_path` (arquivo inteiro).
+1. Leia o `srt_path` (arquivo inteiro) com a tool de leitura do seu runtime.
 2. Ache a cue numerada `suspect.cue`.
 3. Decida: aceitar `rule_suggestion`, escrever uma melhor, ou pular.
-4. Se aceitar/editar: use o Edit tool pra substituir o `suspect.text`
-   exato pelo seu novo texto. Preserve o número da cue e a linha do
-   timestamp.
+4. Se aceitar/editar: use a tool de editar arquivo do seu runtime pra
+   substituir o `suspect.text` exato pelo seu novo texto. Preserve o
+   número da cue e a linha do timestamp.
 5. Pra `forbidden_ending`: edite a cue atual E a próxima juntas —
    geralmente movendo a palavra-função final.
 
