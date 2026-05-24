@@ -1,5 +1,7 @@
 # Transcription notes
 
+**English** · [Português](TRANSCRIPTION_NOTES.pt.md) · [Español](TRANSCRIPTION_NOTES.es.md)
+
 ## YouTube auto-captions vs Groq Whisper
 
 | | YouTube VTT | Groq Whisper-large-v3 |

@@ -1,5 +1,7 @@
 # Changelog
 
+**English** · [Português](CHANGELOG.pt.md) · [Español](CHANGELOG.es.md)
+
 ## 0.1.0 — Initial release (2026-05-23)
 
 First public release. End-to-end pipeline:

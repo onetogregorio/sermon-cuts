@@ -1,5 +1,7 @@
 # Examples
 
+**English** · [Português](README.pt.md) · [Español](README.es.md)
+
 This folder shows what the pipeline produces, using two real PT-BR sermons
 processed during development.
 

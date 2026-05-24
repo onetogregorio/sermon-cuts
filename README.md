@@ -1,183 +1,167 @@
-# sermon-cuts
+# Sermon Cuts
 
-> Pipeline that turns a long preaching/teaching video into ready-to-publish
-> vertical short clips (Reels / Shorts / TikTok). YouTube URL in → curated
-> vertical cuts with burned-in branded subtitles out.
+**English** · [Português](README.pt.md) · [Español](README.es.md)
 
-Built specifically for portuguese-language sermons, but the pipeline is
-language-agnostic (`--language=en`, `pt`, etc).
-
----
-
-## What it does
-
-```
-YouTube URL ──┐
-              ├──► transcribe (YouTube VTT or Groq Whisper, word-level)
-              ├──► VAD silence detection (silero-vad)  →  natural cut boundaries
-              ├──► LLM proposes N cuts with full narrative arcs + score
-              │
-   [you curate which to render]
-              │
-              ├──► validate (no cut ending in "porque...", "mas...", etc)
-              ├──► chunk subtitles (3-4 words, function-word-aware, brand style)
-              ├──► face-tracking smooth pan crop  →  vertical 1080×1920
-              ├──► burn subtitles (gold Outfit Black + black outline + footer)
-              └──► LUFS normalize to -14 (Insta/TikTok/Reels)
-```
-
-Output: `memory/messages/<slug>/renders/NN-cut_slug.mp4` ready for upload.
+> **Skill for Claude, Cursor, and other AI coding agents** that turns long
+> preaching, sermon, or talk videos into ready-to-publish vertical clips for
+> Reels, Shorts, and TikTok — already cropped, captioned, and audio-balanced.
+> Paste a YouTube link. Pick your favorite moments. Get the cuts.
 
 ---
 
-## Why
+## What you get
 
-Short-form vertical clips drive most reach for preaching content today,
-but cutting a 30-min sermon into 8-10 great verticals takes hours per
-sermon if done by hand in CapCut/Premiere. This tool gets it to ~5
-minutes of human curation per sermon, automating:
+You drop in a 30-, 40-, even 60-minute message — your sermon, your conference
+talk, your livestream — and walk away with a folder of **vertical shorts ready
+to upload**. Each one:
 
-- Transcription with word-level timestamps
-- Finding cut boundaries that don't snap mid-word (via VAD)
-- Identifying segments with complete narrative arcs (LLM-assisted)
-- Vertical reframing that follows the speaker (face tracking + smoothing)
-- Branded subtitles that look like a designer made them
-- Audio normalization to platform-standard loudness
+- Reframed vertically (1080×1920) with the speaker centered, smoothly
+- Subtitled in your brand style — gold text, clean outline, no shouting caps
+- Balanced to platform-standard loudness so it sounds right on Instagram and TikTok
+- Named, numbered, and organized so you know what to post and when
+
+What used to be a full Sunday-night editing session in CapCut becomes
+**~5 minutes of curation**. You decide what to publish. The pipeline does the rest.
 
 ---
 
-## Install
+## Built for creators of the Word
 
-**System dependencies:**
+Most short-form content tools are built for marketers selling shoes. This one
+is built for **pastors, preachers, evangelists, teachers, content creators
+talking about faith** — people whose message deserves better than a rushed
+afternoon in Premiere.
+
+It already knows:
+
+- That a great cut needs a **hook**, a **development**, and a **conclusion** —
+  not just a 60-second slice of someone talking
+- That cuts can't end on "porque…" or "mas…" — they have to land
+- That the subtitle font matters, that the audio level matters, that the
+  centering of the speaker's face on a vertical frame matters
+- That **you** are the one who picks the final cuts — the AI proposes, you decide
+
+Made with portuguese-language sermons in mind, but works in any language
+(`--language=en`, `pt`, `es`, etc).
+
+---
+
+## Use it as a skill in your AI editor
+
+This whole pipeline is wrapped as a [Claude Code](https://claude.com/claude-code)
+skill — meaning you can just say to your AI assistant:
+
+> *"cut this sermon: https://youtube.com/watch?v=…"*
+> *"corta essa pregação"*
+> *"make 8 vertical clips of this message for Instagram"*
+
+…and the agent handles transcription, cut proposals, face tracking, subtitles,
+audio normalization, and rendering. You only step in for the part that matters:
+**choosing which moments of your message are worth publishing**.
+
+Works the same way with **Cursor**, **Cline**, **Aider**, or any IDE/agent that
+can read a `SKILL.md` and run shell scripts.
+
+---
+
+## Quick start
 
 ```bash
-# macOS
-brew install ffmpeg yt-dlp python@3.12
-# Optional but recommended for high-quality subtitle rendering:
-# install the Outfit Black font from https://fonts.google.com/specimen/Outfit
-```
-
-**Python deps:**
-
-```bash
-pip install -r requirements.txt
-```
-
-**Optional:** put your `GROQ_API_KEY` in `~/.env` if you want to use
-`--provider=groq` for higher-accuracy transcription (the default uses
-YouTube auto-captions, which is free and instant).
-
----
-
-## Quickstart
-
-```bash
-# 1. Ingest + transcribe + VAD + prepare cut proposal
+# 1. Ingest + transcribe + analyze for cut candidates
 ./scripts/pipeline.sh "https://youtube.com/watch?v=ZKeORvbgWpA"
 
-# 2. (Claude or you) reads transcript + VAD and writes
-#    memory/messages/<slug>/cuts_proposed.json
-#    Use the prompt at prompts/propose_cuts.md
-#    See examples/ for what good cut proposals look like.
+# 2. (Claude — or you) reads the transcript and proposes ~10 cuts.
+#    You pick the ones you like.
 
 # 3. Render the cuts you approved
-./scripts/pipeline.sh --render-cuts 1,2,4,7 --slug vinde
+./scripts/pipeline.sh --render-cuts 1,2,4,7 --slug my_sermon
 ```
 
-Final cuts land at:
+Final cuts land in:
+
 ```
 memory/messages/<slug>/renders/01-cut_slug.mp4
 memory/messages/<slug>/renders/02-cut_slug.mp4
 ...
 ```
 
+Ready to upload.
+
 ---
 
-## Pipeline scripts
+## What's inside
 
-Each script does one thing. They can be run standalone or via
-`scripts/pipeline.sh`.
+Each step is a standalone script — combine them however you like, or just run
+`pipeline.sh` end-to-end.
 
-| Script | Purpose |
+| Script | What it does |
 |---|---|
-| `01_ingest.py` | YouTube URL OR local path → `source.mp4` + `meta.json` |
-| `02_transcribe.py` | YouTube VTT (default) or Groq Whisper → `transcript.json` |
-| `03_vad_segments.py` | silero-vad pauses → `vad.json` (cut candidates) |
-| `04_propose_cuts.py` | Pack inputs for the LLM cut proposal step |
-| `05_validate_cut.py` | Reject/auto-extend cuts that end mid-thought |
-| `06_build_srt.py` | Brand-style SRT (3-4 words, function-word shift, sentence case) |
-| `07_render_track.py` | MediaPipe face track → smooth pan crop → burn subtitle |
-| `08_audio_normalize.py` | pyloudnorm to -14 LUFS (Insta/TikTok/Reels) |
-| `pipeline.sh` | Orchestrate all of the above |
+| `01_ingest.py` | YouTube URL or local video → managed source file |
+| `02_transcribe.py` | Word-level transcription (free via YouTube, or premium via Groq Whisper) |
+| `03_vad_segments.py` | Finds natural pauses so cuts never split mid-word |
+| `04_propose_cuts.py` | Packages the message for the AI to propose narrative-arc cuts |
+| `05_validate_cut.py` | Auto-fixes cuts that end mid-thought |
+| `06_build_srt.py` | Brand-style subtitles: 3-4 words, gold, sentence case |
+| `07_render_track.py` | Face-tracking vertical reframe + burned subtitle |
+| `08_audio_normalize.py` | Audio balanced to -14 LUFS (the Reels/TikTok standard) |
+| `pipeline.sh` | One command to run it all |
 
-See [`docs/PIPELINE.md`](docs/PIPELINE.md) for full walkthrough.
-
----
-
-## Customizing brand style
-
-Edit `config/force_style.txt` (ASS subtitle string) and
-`config/render_defaults.yaml` (output dims, FPS, encoder, audio target).
-
-The default style is:
-
-- Font: **Outfit Black** (gold `#fbc531`, black outline `0.8`)
-- Position: bottom-center, `MarginV=50` (above Insta UI strip)
-- Sentence case, never UPPERCASE
-- 3-4 words per cue, max ~20 chars, function-word-aware breaks
-
-See `CLAUDE.md` for the design rationale.
+Full walkthrough in [`docs/PIPELINE.md`](docs/PIPELINE.md).
+Install in [`docs/INSTALL.md`](docs/INSTALL.md).
 
 ---
 
-## Transcription: YouTube vs Groq
-
-The default `--provider=youtube` reads YouTube auto-captions via yt-dlp.
-**Pros:** free, instant (~3 seconds), no API key needed.
-**Cons:** Whisper-grade errors on rare/proper words (we've seen e.g.
-"superestimamos a Mas" — missed a word).
-
-The fallback `--provider=groq` uses Groq Whisper-large-v3.
-**Pros:** much more accurate, fast (~30s per 10-min audio).
-**Cons:** needs `GROQ_API_KEY` in `~/.env` (free tier is generous).
-
-Both produce the same JSON schema; the rest of the pipeline doesn't care.
-
-See [`docs/TRANSCRIPTION_NOTES.md`](docs/TRANSCRIPTION_NOTES.md) for more.
-
----
-
-## Example output
-
-See [`examples/`](examples/) for a sample cut and the cut proposals from
-the sermon used to build this tool (Mateus 11: "Vinde a mim").
-
----
-
-## Use as a Claude Code skill
-
-If you use [Claude Code](https://claude.com/claude-code), this repo
-includes a `SKILL.md` you can register so Claude invokes the pipeline
-naturally when you say things like *"corta essa pregação"* or paste a
-YouTube link.
+## Install
 
 ```bash
-# Symlink approach (single source of truth)
-mkdir -p ~/.claude/skills/sermon-cuts
-ln -s "$(pwd)/scripts" ~/.claude/skills/sermon-cuts/scripts
-ln -s "$(pwd)/config"  ~/.claude/skills/sermon-cuts/config
-ln -s "$(pwd)/prompts" ~/.claude/skills/sermon-cuts/prompts
-cp SKILL.md ~/.claude/skills/sermon-cuts/SKILL.md
+# macOS
+brew install ffmpeg yt-dlp python@3.12
+pip install -r requirements.txt
 ```
 
-After that, Claude will recognize this skill and use the pipeline
-end-to-end on conversational requests.
+(Linux instructions and optional Groq API setup in [`docs/INSTALL.md`](docs/INSTALL.md).)
+
+---
+
+## Make it look like yours
+
+Edit two files and the whole pipeline adopts your brand:
+
+- `config/force_style.txt` — subtitle font, color, position
+- `config/render_defaults.yaml` — resolution, frame rate, audio target
+
+Default style is built for the gold-on-black look used in the
+[netogregorio.com](https://netogregorio.com) content — but it's all yours
+to change.
+
+---
+
+## See it in action
+
+Check [`examples/`](examples/) for two full case studies — the cuts proposed,
+the curation decisions made, and the final vertical outputs ready to publish.
+
+---
+
+## About me
+
+Hi, I'm **Neto Gregório** — I build tools at the intersection of faith,
+creativity, and AI. I made Sermon Cuts because I was tired of spending Sunday
+night cutting my own messages into Reels by hand, and I figured other people
+preaching, teaching, and creating spiritual content might be tired of it too.
+
+If this project saves you an evening, I'd love to hear about it.
+
+→ **Blog**: [netogregorio.com](https://netogregorio.com) — essays on faith,
+  technology, and building with AI agents
+→ **Instagram**: [@onetogregorio](https://instagram.com/onetogregorio) — behind
+  the scenes, sermon clips, daily thoughts
+→ **GitHub**: [@netogregorio](https://github.com/netogregorio)
+
+Built with [Claude Code](https://claude.com/claude-code).
 
 ---
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
-
-Built by [@netogregorio](https://github.com/netogregorio) with
-[Claude Code](https://claude.com/claude-code).
+MIT — see [`LICENSE`](LICENSE). Use it freely. Cut more messages. Reach more people.

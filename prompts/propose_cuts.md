@@ -1,5 +1,7 @@
 # Prompt: identify cuts with complete narrative arcs
 
+**English** · [Português](propose_cuts.pt.md) · [Español](propose_cuts.es.md)
+
 You are reading a Portuguese-language preaching/sermon transcript with
 word-level timestamps, plus a list of natural pause boundaries from VAD.
 Your job is to **propose 8–15 short-form video cuts** suitable for Reels,

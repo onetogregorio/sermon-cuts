@@ -1,5 +1,7 @@
 # Pipeline walkthrough
 
+**English** · [Português](PIPELINE.pt.md) · [Español](PIPELINE.es.md)
+
 Each script writes to `memory/messages/<slug>/` and is idempotent (re-running
 is safe and skips done work unless `--force`).
 

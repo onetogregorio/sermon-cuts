@@ -1,5 +1,7 @@
 # Installation
 
+**English** · [Português](INSTALL.pt.md) · [Español](INSTALL.es.md)
+
 ## System dependencies
 
 ### macOS

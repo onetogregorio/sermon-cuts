@@ -5,6 +5,8 @@ description: "End-to-end pipeline for cutting vertical short-form clips from lon
 
 # sermon-cuts — pipeline de cortes pra pregações
 
+[English](SKILL.en.md) · [**Português**](SKILL.md) · [Español](SKILL.es.md)
+
 ## Quando invocar
 
 Você invoca essa skill quando o usuário pede coisas como:
@@ -137,3 +139,7 @@ force_style:
   BorderStyle=1,Outline=0.8,Shadow=0,
   Alignment=2,MarginV=50
 ```
+
+---
+
+Por [@netogregorio](https://github.com/netogregorio) · [netogregorio.com](https://netogregorio.com) · [@onetogregorio](https://instagram.com/onetogregorio)
