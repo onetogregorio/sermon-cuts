@@ -507,6 +507,12 @@ section h2 {
   margin: 0 auto 30px;
 }
 
+/* Single-sponsor layout: center one card without stretching it full-width. */
+.sponsor-grid--solo {
+  grid-template-columns: minmax(0, 420px);
+  justify-content: center;
+}
+
 .sponsor-card {
   display: flex;
   flex-direction: column;

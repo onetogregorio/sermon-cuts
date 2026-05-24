@@ -190,7 +190,6 @@ and faith content creators.
 <!-- SPONSORS:START -->
 - **[Midvash](https://midvash.com)** — Online Bible with AI · 9 languages,
   70 Bible versions, semantic search and study tools powered by language models.
-- **MinhaIgreja** — _TODO: URL + short description_
 <!-- SPONSORS:END -->
 
 Want to support this project? [Become a sponsor →](https://github.com/sponsors/onetogregorio)

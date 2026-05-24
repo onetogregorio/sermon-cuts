@@ -193,7 +193,6 @@ igreja e os criadores de conteúdo cristão.
 <!-- SPONSORS:START -->
 - **[Midvash](https://midvash.com/pt-br)** — Bíblia online com IA · 9 idiomas,
   70 versões da Bíblia, busca semântica e ferramentas de estudo movidas a modelos de linguagem.
-- **MinhaIgreja** — _TODO: URL + descrição curta_
 <!-- SPONSORS:END -->
 
 Quer apoiar esse projeto? [Seja patrocinador →](https://github.com/sponsors/onetogregorio)
