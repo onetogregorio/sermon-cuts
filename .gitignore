@@ -1,5 +1,13 @@
-# Source media (large, gitignored)
-sources/
+# User-visible data folders — keep the folder + README + .gitkeep,
+# ignore the actual sermon files inside.
+sources/*
+!sources/.gitkeep
+!sources/README.md
+renders/*
+!renders/.gitkeep
+!renders/README.md
+
+# Media files anywhere outside the explicitly allowed locations
 *.mp4
 *.mov
 *.mkv
@@ -18,7 +26,6 @@ sources/
 
 # Intermediates / generated
 edit/                       # legacy folder, will be removed
-**/renders/
 **/srts/
 **/tmp/
 **/cache/
@@ -30,7 +37,7 @@ edit/                       # legacy folder, will be removed
 **/propose_input.json
 **/meta.json
 
-# Per-message memory (private)
+# Per-message state (transcripts, VAD, srts — private)
 memory/messages/
 
 # Python
