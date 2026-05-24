@@ -1,0 +1,14 @@
+# Core
+yt-dlp>=2025.0.0
+groq>=1.0.0
+mediapipe>=0.10.0
+opencv-python-headless>=4.10.0
+numpy>=1.26.0
+pyloudnorm>=0.1.1
+silero-vad>=5.0.0
+soundfile>=0.12.0
+pyyaml>=6.0
+
+# System dependency (NOT a pip package — install via brew/apt):
+#   ffmpeg (with libass + libx264 + libfontconfig)
+#   Outfit-Black font (https://fonts.google.com/specimen/Outfit)

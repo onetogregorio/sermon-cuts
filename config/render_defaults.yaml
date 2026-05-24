@@ -1,0 +1,45 @@
+# Defaults para todos os renders. Override por mensagem em
+# memory/messages/<slug>/overrides.yaml se quiser.
+
+output:
+  width: 1080
+  height: 1920
+  fps: 30
+
+video:
+  encoder: libx264
+  preset: slow
+  crf: 18
+  pix_fmt: yuv420p
+
+audio:
+  codec: aac
+  bitrate: 128k
+  target_lufs: -14.0   # padrão Insta/TikTok/Reels
+
+tracking:
+  sample_fps: 2.0       # detecções por segundo
+  smooth_window_s: 2.5  # janela de média móvel
+  detector: mediapipe   # mediapipe | haar
+  min_face_size: 80
+
+subtitle:
+  min_words: 3
+  max_words: 4
+  max_chars: 20
+  font_path: /Users/netogregorio/Library/Fonts/Outfit-Black.ttf
+
+cut_validation:
+  min_pause_after_last_token_s: 0.5
+  forbid_endings:                      # se cut termina nessas palavras, INVALID
+    - porque
+    - mas
+    - e
+    - que
+    - para
+    - de
+    - com
+    - em
+  required_terminal_punct: ".!?"       # cue final ideal termina em uma dessas
+
+ffmpeg_bin: /opt/homebrew/opt/ffmpeg-full/bin/ffmpeg

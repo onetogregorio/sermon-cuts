@@ -1,0 +1,13 @@
+# Palavras de função em PT-BR. Quebrar legenda terminando em uma dessas
+# fica feio — deslocamos pro próximo chunk se houver espaço.
+# artigos
+a o as os um uma uns umas
+# preposições simples
+de do da dos das em no na nos nas para pra por pelos pelas pelo pela
+com sem sob sobre ao à às aos
+# conjunções
+e ou mas nem se que porque como
+# verbos de ligação curtos
+é foi vai
+# possessivos
+meu minha seu sua teu tua nosso nossa

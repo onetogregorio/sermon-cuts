@@ -1,0 +1,55 @@
+# Source media (large, gitignored)
+sources/
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.m4v
+*.wav
+*.mp3
+*.m4a
+*.flac
+
+# Allow sample(s) in examples/
+!examples/**/*.mp4
+!examples/**/*.gif
+
+# Intermediates / generated
+edit/                       # legacy folder, will be removed
+**/renders/
+**/srts/
+**/tmp/
+**/cache/
+**/*.vtt
+**/*.task                   # mediapipe models (auto-downloaded)
+**/transcript.json
+**/vad.json
+**/cuts_proposed.json
+**/propose_input.json
+**/meta.json
+
+# Per-message memory (private)
+memory/messages/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv*/
+.python-version
+*.egg-info/
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Secrets
+.env
+.env.local
+*.pem
+*.key
+
+# Logs
+*.log
