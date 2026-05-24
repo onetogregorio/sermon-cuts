@@ -25,7 +25,8 @@ renders/*
 !site/**/*.gif
 
 # Intermediates / generated
-edit/                       # legacy folder, will be removed
+# legacy folder, kept for personal curation workflow (see CLAUDE.md ritual)
+edit/
 **/srts/
 **/tmp/
 **/cache/
