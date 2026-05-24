@@ -96,10 +96,16 @@ def main() -> None:
                 break
 
     adj_start = orig_start
-    # Start adjustment: snap to nearest candidate ≤ orig_start (within 3s)
+    # Start is NEVER auto-modified: it represents the curator's (LLM or human)
+    # deliberate intent about where the cut should begin. We only report the
+    # nearest prior VAD candidate as advisory info — moving it would override
+    # a hand-picked in-point. Bug reproduced when LLM picked start=97.92 to
+    # land exactly on "às vezes" and validate snapped it back to 95.252 (the
+    # previous VAD candidate, mid-sentence), ruining the hook.
+    nearest_prior_candidate = None
     prev_cands = [c for c in candidates if c <= orig_start and orig_start - c <= 3.0]
     if prev_cands:
-        adj_start = max(prev_cands)
+        nearest_prior_candidate = max(prev_cands)
 
     last_text_clean = (last_text or "").strip()
     ending_punct = last_text_clean[-1] if last_text_clean and last_text_clean[-1] in ".!?,;:" else ""
@@ -111,6 +117,7 @@ def main() -> None:
         "original_end": orig_end,
         "adjusted_start": adj_start,
         "adjusted_end": adj_end,
+        "nearest_prior_vad_candidate": nearest_prior_candidate,
         "last_word": last_text_clean,
         "ending_punctuation": ending_punct,
         "reason": reason,
