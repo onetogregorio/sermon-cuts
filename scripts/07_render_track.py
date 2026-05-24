@@ -165,6 +165,12 @@ def render_vertical_with_track(src: Path, seg_start: float, seg_end: float, out_
         "-i", "-",
         "-c:v", VID["encoder"], "-preset", VID["preset"], "-crf", str(VID["crf"]),
         "-pix_fmt", VID["pix_fmt"],
+        # Tag BT.709 color metadata so macOS Preview / QuickTime render properly
+        # (without these, Preview shows a blank/black canvas for vertical clips).
+        "-color_range", "tv",
+        "-colorspace", "bt709",
+        "-color_primaries", "bt709",
+        "-color_trc", "bt709",
         "-movflags", "+faststart",
         str(out_video),
     ], stdin=subprocess.PIPE, stderr=subprocess.DEVNULL)
@@ -210,6 +216,11 @@ def burn_subtitles(video: Path, srt: Path, out: Path) -> None:
         "-vf", vf,
         "-c:v", VID["encoder"], "-preset", VID["preset"], "-crf", str(VID["crf"]),
         "-pix_fmt", VID["pix_fmt"],
+        # Re-tag BT.709 color metadata after burn-in re-encode (see render_segment).
+        "-color_range", "tv",
+        "-colorspace", "bt709",
+        "-color_primaries", "bt709",
+        "-color_trc", "bt709",
         "-c:a", "copy", "-movflags", "+faststart",
         str(out),
     ], check=True, stderr=subprocess.DEVNULL)
