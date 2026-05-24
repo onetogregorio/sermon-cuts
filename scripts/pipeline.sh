@@ -63,10 +63,17 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# scrub() — runs 06b unless --skip-scrub was passed. Interactive when on a
-# TTY (review suggestions y/n/edit/skip), otherwise falls through with
-# --auto-apply so batch/CI runs still get the dictionary + high-confidence
-# fixes without prompting.
+# scrub() — runs 06b unless --skip-scrub was passed. Behavior depends on
+# context:
+#   • TTY      → interactive review (y/n/edit/skip per suspect)
+#   • non-TTY  → 06b defaults to --agent-review when suspects exist, so
+#                the orchestrating agent (Claude Code, Cursor, …) gets
+#                the JSON report with cue context + transcript snippet
+#                and can apply Edit-tool fixes before pipeline.sh
+#                continues into 07_render_track. The JSON goes to the
+#                caller's stdout so the agent sees it directly.
+# To bypass entirely (CI without an agent, or after the SRT has already
+# been vetted), pass --skip-scrub.
 scrub() {
   local idx="$1"
   if [[ "$SKIP_SCRUB" -eq 1 ]]; then
@@ -75,9 +82,14 @@ scrub() {
   fi
   echo "→ cut #$idx: scrub SRT (review suspeitos)"
   if [[ -t 0 ]]; then
+    # Interactive: 06b runs its TTY review loop. We can swallow stdout
+    # because the user sees the prompts on stderr.
     $PY "$SCRIPTS/06b_scrub_srt.py" "$SLUG" "$idx" >/dev/null
   else
-    $PY "$SCRIPTS/06b_scrub_srt.py" "$SLUG" "$idx" --auto-apply >/dev/null
+    # Non-TTY: let 06b emit its --agent-review JSON to our caller's
+    # stdout (most likely an agent reading our output). We don't pipe
+    # through /dev/null — the JSON IS the contract here.
+    $PY "$SCRIPTS/06b_scrub_srt.py" "$SLUG" "$idx"
   fi
 }
 

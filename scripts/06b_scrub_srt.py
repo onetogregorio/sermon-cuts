@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Lint a brand SRT for likely YouTube-auto-caption errors before burn-in.
 
-Catches the three failure modes we see most often when transcribing
-sermons through YouTube auto-captions (PT-BR, ~10 cuts/week dogfooding):
+Catches the failure modes we see most often when transcribing sermons
+through YouTube auto-captions (PT-BR, ~10 cuts/week dogfooding):
 
   1. **dropped_word_boundary** — a function word (em/que/de/etc.) sits
      directly before a capitalized non-proper-noun. YouTube ate a word
@@ -11,60 +11,66 @@ sermons through YouTube auto-captions (PT-BR, ~10 cuts/week dogfooding):
        "uma Então, aqui"  →  was actually  "uma relação. Então, aqui"
 
   2. **immediate_repetition** — hesitation duplicated by the transcriber.
-       "um um", "que que", "a a"
-     We only flag short-and-functional repetitions (≤3 chars or in a
-     small allow-list) so we don't false-positive on stylistic
-     repetitions like "cansa, cansa" or "lá, lá".
+     Only flags short / function-word repetitions ("um um", "que que",
+     "a a") so stylistic emphasis like "cansa, cansa" survives.
 
   3. **forbidden_ending** — a cue ends on a word from
      ``cut_validation.forbid_endings`` (porque, mas, que, para, …).
-     ``05_validate_cut.py`` already checks this at cut-level; here we
-     check it per-cue so the SRT itself reads well.
-
-Plus a hands-off dictionary pass:
+     ``05_validate_cut.py`` already checks this at cut-level; here
+     we check it per-cue.
 
   4. **dictionary** — ``memory/messages/<slug>/corrections.txt`` with
-     ``wrong=right`` lines applies automatically. Useful for recurring
-     theological / proper-name fixes ("Quisto=Cristo").
+     ``wrong=right`` lines applies automatically. Always on. Useful
+     for recurring theological / proper-name fixes ("Quisto=Cristo").
 
-And an opt-in LLM pass (--use-llm) when GROQ_API_KEY or
-ANTHROPIC_API_KEY is in env. Currently emits a warning and skips
-the LLM call — wiring the call is left for a follow-up commit so this
-step can ship without an API surface change.
+Three review paths beyond the rules:
+
+  • **--agent-review** (default in non-TTY when there are suspects).
+    Emits a structured JSON with prev/next cue context, word-level
+    transcript snippet around each suspect, and a path to
+    ``prompts/scrub_srt.md`` so an orchestrating agent (Claude Code,
+    Cursor, …) can read the report, edit the SRT via its editor
+    tool, and resume the pipeline with ``--skip-scrub``.
+
+  • **--use-llm** — calls Anthropic Claude (preferred via
+    ANTHROPIC_API_KEY) or Groq Llama (fallback via GROQ_API_KEY)
+    with ``prompts/scrub_srt.md`` as the system prompt and the
+    suspect list as the user message. Applies the LLM's returned
+    fixes. For unattended runs (cron, nightly) where no agent is
+    orchestrating.
+
+  • **--auto-apply** — rule-only, applies confidence ≥ 0.85 silently
+    (effectively just the immediate_repetition pattern). Cheapest mode.
 
 Usage:
-    06b_scrub_srt.py <slug> <cut_index> [--auto-apply]
+    06b_scrub_srt.py <slug> <cut_index> [--agent-review]
                                        [--use-llm]
+                                       [--auto-apply]
                                        [--dry-run]
                                        [--corrections FILE]
 
-Modes:
-    interactive  (default, TTY)  prompts y/n/edit/skip per suspect
-    --auto-apply                 applies confidence ≥ 0.8 silently
-    --dry-run                    reports without modifying the SRT
+Mode resolution when no flag is passed:
+    TTY + stdin attached       → interactive y/n/edit/skip
+    non-TTY, suspects > 0      → --agent-review (default)
+    non-TTY, suspects == 0     → no-op
 
-Output: a stable JSON document on stdout shaped like
+Output: a stable JSON document on stdout. In --agent-review mode the
+schema is documented in ``prompts/scrub_srt.md``. Otherwise:
     {
       "ok": true,
       "srt": "...path...",
-      "suspects": [
-        {"cue": 27, "tc": "00:00:36,080",
-         "text": "do que Mas não",
-         "pattern": "dropped_word_boundary",
-         "matched": "que Mas",
-         "suggestion": "do que. Mas não",
-         "confidence": 0.75, "applied": false}
-      ],
-      "applied_count": 0,
-      "dry_run": false
+      "suspects": [...],
+      "applied_count": <int>,
+      "dry_run": <bool>
     }
 
 Reads:
     memory/messages/<slug>/cuts_proposed.json
     memory/messages/<slug>/srts/NN-slug.srt
-    memory/messages/<slug>/corrections.txt   (optional)
+    memory/messages/<slug>/transcript.json   (for word-level context)
+    memory/messages/<slug>/corrections.txt   (optional dictionary)
 Writes:
-    memory/messages/<slug>/srts/NN-slug.srt   (in-place, unless --dry-run)
+    memory/messages/<slug>/srts/NN-slug.srt   (in-place when applying)
 """
 
 from __future__ import annotations
@@ -487,6 +493,180 @@ def apply_to_cue(cues: list[dict], cue_n: int, new_text: str) -> None:
             return
 
 
+# ─── context extraction (for --agent-review and --use-llm) ────────────────
+
+
+def _srt_tc_to_seconds(tc: str) -> float:
+    """SRT timestamp "HH:MM:SS,mmm" → seconds (float). Pipeline always
+    writes SRT in UTF-8 with comma as the decimal separator."""
+    h, m, rest = tc.split(":", 2)
+    s, ms = rest.split(",", 1)
+    return int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000.0
+
+
+def transcript_snippet_around(
+    transcript_words: list[dict], cue_tc: str, cut_start_s: float, window_s: float = 4.0
+) -> str:
+    """Return a short transcript snippet around ``cue_tc`` (which is
+    measured from the cut start, not the source start).
+
+    Useful for the agent / LLM: the cue's own text is often misleading
+    (that's why it's a suspect) and the raw word-level transcript
+    contains the word(s) the transcriber dropped.
+    """
+    if not transcript_words:
+        return ""
+    cue_abs_s = cut_start_s + _srt_tc_to_seconds(cue_tc)
+    lo, hi = cue_abs_s - window_s, cue_abs_s + window_s
+    tokens: list[str] = []
+    for w in transcript_words:
+        if w.get("type") != "word":
+            continue
+        start = w.get("start")
+        if start is None or start < lo or start > hi:
+            continue
+        text = (w.get("text") or "").strip()
+        if text:
+            tokens.append(text)
+    return " ".join(tokens).strip()
+
+
+def attach_agent_context(
+    suspects: list[dict],
+    cues: list[dict],
+    transcript_words: list[dict],
+    cut_start_s: float,
+) -> None:
+    """Mutate each suspect dict to add a ``context`` block with the
+    surrounding cues' text + the raw word-level transcript around the
+    cue's timestamp. Skips suspects that are already applied."""
+    cues_by_n = {c["n"]: c for c in cues}
+    for s in suspects:
+        if s.get("applied"):
+            continue
+        n = s["cue"]
+        prev = cues_by_n.get(n - 1)
+        nxt = cues_by_n.get(n + 1)
+        snippet = transcript_snippet_around(transcript_words, s["tc"], cut_start_s)
+        s["context"] = {
+            "prev_cue_text": (prev["text"].strip() if prev else None),
+            "next_cue_text": (nxt["text"].strip() if nxt else None),
+            "transcript_around_tc": snippet,
+        }
+        # Rename rule output key for consistency with the prompt schema.
+        if "suggestion" in s and "rule_suggestion" not in s:
+            s["rule_suggestion"] = s["suggestion"]
+
+
+# ─── --use-llm: call Anthropic API (or Groq fallback) ─────────────────────
+
+
+def _build_llm_prompt(srt_text: str, suspects: list[dict]) -> tuple[str, str]:
+    """Return (system_prompt, user_message) for the LLM call. The system
+    prompt is loaded from ``prompts/scrub_srt.md`` so the SDK-less path
+    here stays in sync with the agent-review prompt."""
+    system_path = SKILL_ROOT / "prompts" / "scrub_srt.md"
+    system = (
+        system_path.read_text()
+        if system_path.exists()
+        else "You are a Portuguese-language SRT proofreader."
+    )
+    actionable = [s for s in suspects if not s.get("applied")]
+    user = (
+        "Here is the full SRT file content:\n\n"
+        f"```srt\n{srt_text}\n```\n\n"
+        "Suspect cues to review (JSON):\n\n"
+        f"```json\n{json.dumps(actionable, indent=2, ensure_ascii=False)}\n```\n\n"
+        "Return a JSON object of the form:\n"
+        '  {"fixes": [{"cue": <int>, "new_text": <str>, "reason": <str>}, ...]}\n\n'
+        "Include only cues you're confident about. Omit ones to skip. "
+        "Don't wrap the JSON in markdown — return raw JSON only."
+    )
+    return system, user
+
+
+def _parse_llm_fixes(raw: str) -> list[dict]:
+    """The LLM should return a single JSON object with a `fixes` array.
+    Strip optional ```json fences and parse defensively."""
+    txt = raw.strip()
+    # Tolerate fenced output even though we asked for raw.
+    if txt.startswith("```"):
+        # Drop first and last fence lines.
+        lines = txt.splitlines()
+        txt = "\n".join(line for line in lines if not line.startswith("```"))
+    try:
+        data = json.loads(txt)
+    except json.JSONDecodeError as e:
+        warn(f"LLM resposta não é JSON válido: {e}")
+        return []
+    fixes = data.get("fixes") if isinstance(data, dict) else None
+    return fixes if isinstance(fixes, list) else []
+
+
+def llm_review(srt_text: str, suspects: list[dict]) -> list[dict]:
+    """Call Anthropic Claude (preferred) or Groq (fallback) to review
+    rule-based suspects. Returns a list of ``{cue, new_text, reason}``
+    fixes the LLM is confident about. Returns ``[]`` on any failure
+    (missing key, network error, malformed JSON) — caller falls back
+    gracefully to rule-based handling."""
+    has_anthropic = bool(os.environ.get("ANTHROPIC_API_KEY"))
+    has_groq = bool(os.environ.get("GROQ_API_KEY"))
+    if not (has_anthropic or has_groq):
+        warn(
+            "--use-llm pedido mas nenhuma API key encontrada",
+            hint="defina ANTHROPIC_API_KEY ou GROQ_API_KEY no env",
+        )
+        return []
+    system, user = _build_llm_prompt(srt_text, suspects)
+
+    if has_anthropic:
+        try:
+            import anthropic
+        except ImportError:
+            warn(
+                "pacote `anthropic` não instalado",
+                hint="pip install anthropic, ou exporte só GROQ_API_KEY pra usar Groq",
+            )
+            return []
+        try:
+            client = anthropic.Anthropic()
+            resp = client.messages.create(
+                model="claude-haiku-4-5",
+                max_tokens=2048,
+                system=system,
+                messages=[{"role": "user", "content": user}],
+            )
+            # Anthropic returns a list of content blocks; concat their text.
+            raw = "".join(getattr(b, "text", "") for b in resp.content)
+        except Exception as e:
+            warn(f"chamada Anthropic falhou: {e}")
+            return []
+        return _parse_llm_fixes(raw)
+
+    # Groq fallback — uses an OpenAI-compatible chat completions endpoint.
+    try:
+        from groq import Groq
+    except ImportError:
+        warn("pacote `groq` não instalado (e ANTHROPIC_API_KEY ausente)")
+        return []
+    try:
+        client = Groq()
+        resp = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            max_tokens=2048,
+            temperature=0.2,
+        )
+        raw = resp.choices[0].message.content or ""
+    except Exception as e:
+        warn(f"chamada Groq falhou: {e}")
+        return []
+    return _parse_llm_fixes(raw)
+
+
 # ─── main ─────────────────────────────────────────────────────────────────
 
 
@@ -497,12 +677,24 @@ def main() -> None:
     ap.add_argument(
         "--auto-apply",
         action="store_true",
-        help="apply rule-based fixes with confidence ≥ 0.8 without asking",
+        help="apply rule-based fixes with confidence ≥ 0.85 without asking",
     )
     ap.add_argument(
         "--use-llm",
         action="store_true",
-        help="run an LLM-assisted review pass (requires GROQ_API_KEY or ANTHROPIC_API_KEY)",
+        help=(
+            "run an LLM-assisted review pass (prefers ANTHROPIC_API_KEY, "
+            "falls back to GROQ_API_KEY). Applies fixes the LLM returns."
+        ),
+    )
+    ap.add_argument(
+        "--agent-review",
+        action="store_true",
+        help=(
+            "emit a structured JSON document with context (prev/next cue, "
+            "word-level transcript snippet) for an orchestrating agent to "
+            "read and apply fixes via its editor. Doesn't modify the SRT."
+        ),
     )
     ap.add_argument(
         "--dry-run",
@@ -543,47 +735,66 @@ def main() -> None:
     all_suspects: list[dict] = []
     applied_count = 0
 
-    # Pass 1: dictionary corrections — auto-apply, no prompts.
+    # Pass 1: dictionary corrections — always auto-apply, no prompts.
     dict_path = Path(args.corrections) if args.corrections else (msg_dir / "corrections.txt")
     dict_applied = apply_corrections_dict(cues, dict_path)
     all_suspects.extend(dict_applied)
     applied_count += len(dict_applied)
 
-    # Pass 2: rule-based heuristics — collect, then prompt or auto-apply.
+    # Pass 2: rule-based heuristics — collect, then prompt / auto-apply /
+    # forward to LLM / forward to agent, depending on mode.
     rule_suspects: list[dict] = []
     rule_suspects.extend(detect_dropped_word_boundary(cues))
     rule_suspects.extend(detect_immediate_repetition(cues))
     rule_suspects.extend(detect_forbidden_ending(cues))
 
-    if args.use_llm:
-        has_groq = bool(os.environ.get("GROQ_API_KEY"))
-        has_anthropic = bool(os.environ.get("ANTHROPIC_API_KEY"))
-        if not (has_groq or has_anthropic):
-            warn(
-                "--use-llm pedido mas nenhuma API key encontrada",
-                hint="defina GROQ_API_KEY ou ANTHROPIC_API_KEY no env",
-            )
-        else:
-            warn("--use-llm: pass LLM ainda não conectado nesta versão; rodando só rule-based")
+    # Decide the operational mode. Order of preference:
+    #   1. explicit flag (--agent-review, --use-llm, --auto-apply, --dry-run)
+    #   2. TTY + stdin attached → interactive
+    #   3. non-TTY with rule_suspects → default to --agent-review so the
+    #      orchestrating agent (Claude Code, etc.) gets to revise instead
+    #      of silently auto-applying. Lets pipeline.sh route review through
+    #      the agent loop without changing its caller.
+    #   4. non-TTY with no suspects → behave like --dry-run (no-op).
+    explicit = args.agent_review or args.use_llm or args.auto_apply or args.dry_run
+    interactive = _TTY and sys.stdin.isatty() and not explicit
+    agent_mode = args.agent_review or (not explicit and not interactive and bool(rule_suspects))
 
-    # Decide how to handle the rule-based suspects.
-    if args.dry_run:
+    if args.dry_run or agent_mode:
+        # Don't mutate; collect and emit.
         all_suspects.extend(rule_suspects)
+    elif args.use_llm:
+        # First collect everything for the report, then call the LLM and
+        # apply its fixes on top of the rule list.
+        all_suspects.extend(rule_suspects)
+        srt_text_for_llm = srt_path.read_text()
+        llm_fixes = llm_review(srt_text_for_llm, rule_suspects)
+        for fx in llm_fixes:
+            try:
+                target_n = int(fx.get("cue"))
+                new_text = str(fx.get("new_text", "")).strip()
+            except (TypeError, ValueError):
+                continue
+            if not new_text:
+                continue
+            apply_to_cue(cues, target_n, new_text)
+            applied_count += 1
+            # Tag the matching suspect (if any) as applied so the report
+            # reflects what changed.
+            for s in all_suspects:
+                if s.get("cue") == target_n and not s.get("applied"):
+                    s["applied"] = True
+                    s["llm_suggestion"] = new_text
+                    s["llm_reason"] = fx.get("reason", "")
+                    break
     elif args.auto_apply:
-        # Threshold raised to 0.85: in practice this means only
-        # immediate_repetition (conf 0.85) auto-applies silently.
-        # dropped_word_boundary (0.75) and forbidden_ending (0.60) still
-        # show up in the report but require manual review — they have
-        # more ambiguous fixes (insert period vs. recover dropped word,
-        # move cue text vs. accept short cue, etc.).
         for s in rule_suspects:
             if s["confidence"] >= 0.85 and s["pattern"] != "forbidden_ending":
                 apply_to_cue(cues, s["cue"], s["suggestion"])
                 s["applied"] = True
                 applied_count += 1
             all_suspects.append(s)
-    elif _TTY and sys.stdin.isatty():
-        # Interactive review.
+    elif interactive:
         print(
             f"{_BOLD}06b_scrub_srt{_RST}  {_DIM}— {len(rule_suspects)} suspeitos em "
             f"{srt_path.name}{_RST}",
@@ -611,33 +822,63 @@ def main() -> None:
                     apply_to_cue(cues, s["cue"], new)
                     s["applied"] = True
                     applied_count += 1
-            # 'n', 'skip', empty, or anything else → leave as-is.
             all_suspects.append(s)
     else:
-        # Non-interactive, non-TTY, no flags → behave like --dry-run so we
-        # never modify an SRT silently in scripted environments.
+        # Should be unreachable given the agent_mode default, but kept as
+        # a defensive fallback: no rule suspects + non-TTY + no flags → no-op.
         all_suspects.extend(rule_suspects)
 
-    if not args.dry_run and applied_count > 0:
+    if not args.dry_run and not agent_mode and applied_count > 0:
         srt_path.write_text(serialize_srt(cues), encoding="utf-8")
         print(
             f"{_BOLD}wrote{_RST} {srt_path} ({_YEL}{applied_count}{_RST} fix(es) applied)",
             file=sys.stderr,
         )
 
-    print(
-        json.dumps(
-            {
-                "ok": True,
-                "srt": str(srt_path),
-                "suspects": all_suspects,
-                "applied_count": applied_count,
-                "dry_run": args.dry_run,
+    # Build the JSON output. agent_mode adds extra context fields and a
+    # next_action hint so the agent reading stdout has everything it needs
+    # without re-reading config files.
+    if agent_mode:
+        transcript_path = msg_dir / "transcript.json"
+        transcript_words: list[dict] = []
+        if transcript_path.exists():
+            try:
+                transcript_words = json.loads(transcript_path.read_text()).get("words", [])
+            except json.JSONDecodeError:
+                transcript_words = []
+        attach_agent_context(all_suspects, cues, transcript_words, float(cut.get("start", 0)))
+        output: dict = {
+            "ok": True,
+            "mode": "agent_review",
+            "srt_path": str(srt_path),
+            "transcript_path": str(transcript_path),
+            "prompt_path": str(SKILL_ROOT / "prompts" / "scrub_srt.md"),
+            "cut_index": args.cut_index,
+            "cut": {
+                "n": n,
+                "slug": slug,
+                "start": cut.get("start"),
+                "end": cut.get("end"),
+                "theme": cut.get("theme"),
+                "hook": cut.get("hook"),
             },
-            indent=2,
-            ensure_ascii=False,
-        )
-    )
+            "suspects": all_suspects,
+            "applied_count": applied_count,
+            "next_action": (
+                "agent should read prompt_path, then for each suspect with applied=false "
+                "apply an Edit to srt_path. Run pipeline.sh --render-cut N --slug <slug> "
+                "--skip-scrub when done."
+            ),
+        }
+    else:
+        output = {
+            "ok": True,
+            "srt": str(srt_path),
+            "suspects": all_suspects,
+            "applied_count": applied_count,
+            "dry_run": args.dry_run,
+        }
+    print(json.dumps(output, indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":
