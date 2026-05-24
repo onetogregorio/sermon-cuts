@@ -108,17 +108,6 @@ code {
   opacity: 1;
 }
 
-.nav a.gh {
-  color: var(--gold);
-  border: 1px solid rgba(251, 197, 49, 0.32);
-  padding: 6px 14px;
-  border-radius: 999px;
-}
-
-.nav a.gh:hover {
-  background: rgba(251, 197, 49, 0.1);
-}
-
 .lang-switch {
   display: flex;
   gap: 4px;
@@ -142,18 +131,14 @@ code {
   .site-header {
     padding: 12px 18px;
     flex-wrap: wrap;
+    gap: 10px;
   }
   .nav {
     order: 3;
     width: 100%;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .nav a:not(.gh) {
-    display: none;
-  }
-  .nav a.gh {
-    margin-left: auto;
+    justify-content: space-around;
+    gap: 8px;
+    font-size: 0.85rem;
   }
 }
 
@@ -332,14 +317,14 @@ section h2 {
 
 .code-card {
   position: relative;
-  background: #0a0f24;
-  border: 1px solid rgba(251, 197, 49, 0.18);
+  background: #ffffff;
+  border: 1px solid rgba(251, 197, 49, 0.32);
   border-radius: 18px;
   padding: 28px 28px 22px;
   margin-top: 18px;
   box-shadow:
-    0 20px 60px -20px rgba(25, 42, 86, 0.6),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    0 24px 60px -22px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(251, 197, 49, 0.06);
 }
 
 .code-card pre {
@@ -347,30 +332,36 @@ section h2 {
   font-family: 'SF Mono', ui-monospace, 'Cascadia Code', Menlo, monospace;
   font-size: 0.88rem;
   line-height: 1.7;
-  color: #d6d3c2;
+  color: #1a1f2e;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* Inline links inside the prompt (URLs) stay readable on white. */
+.code-card pre a {
+  color: #5b3a05;
 }
 
 .copy-btn {
   position: absolute;
   top: 14px;
   right: 14px;
-  background: rgba(251, 197, 49, 0.18);
+  background: var(--ink);
   color: var(--gold);
-  border: 1px solid rgba(251, 197, 49, 0.35);
-  padding: 6px 14px;
+  border: 1px solid var(--ink);
+  padding: 7px 16px;
   font-family: 'Outfit', sans-serif;
-  font-weight: 700;
-  font-size: 0.8rem;
+  font-weight: 800;
+  font-size: 0.82rem;
   letter-spacing: 0.04em;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, transform 0.12s ease;
 }
 
 .copy-btn:hover {
-  background: rgba(251, 197, 49, 0.3);
+  background: #1a2138;
+  transform: translateY(-1px);
 }
 
 .after-prompt {
