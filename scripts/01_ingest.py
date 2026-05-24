@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-"""Ingest a source video — from YouTube URL or local file path —
-into the skill's memory directory.
+"""Ingest a source video — from YouTube URL or local file path.
+
+The source MP4 lands in a user-visible, Finder-navigable folder:
+``<repo>/sources/<slug>/source.mp4``. Pipeline state (meta.json,
+transcript, vad, etc.) goes to the hidden ``<skill>/memory/messages/<slug>/``.
 
 Usage:
     01_ingest.py <url-or-path> [--slug SLUG]
@@ -8,8 +11,8 @@ Usage:
 If --slug is omitted, derives from YouTube title or filename.
 
 Output:
-    ~/.claude/skills/sermon-cuts/memory/messages/<slug>/source.mp4
-    ~/.claude/skills/sermon-cuts/memory/messages/<slug>/meta.json
+    <repo>/sources/<slug>/source.mp4
+    <skill>/memory/messages/<slug>/meta.json
 """
 
 from __future__ import annotations
@@ -23,8 +26,11 @@ import sys
 import unicodedata
 from pathlib import Path
 
-SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
-MESSAGES = SKILL_ROOT / "memory/messages"
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import resolve_messages_dir, resolve_sources_dir
+
+MESSAGES = resolve_messages_dir()
+SOURCES = resolve_sources_dir()
 
 
 def slugify(text: str) -> str:
@@ -33,6 +39,17 @@ def slugify(text: str) -> str:
     text = "".join(c for c in text if not unicodedata.combining(c))
     text = re.sub(r"[^a-zA-Z0-9]+", "_", text).strip("_").lower()
     return text[:60] or "untitled"
+
+
+def _slug_dirs(slug: str) -> tuple[Path, Path]:
+    """Return (source_dir, state_dir) for a slug. Source dir is user-visible
+    under <repo>/sources/<slug>/; state dir is hidden under
+    <skill>/memory/messages/<slug>/. Both created if missing."""
+    source_dir = SOURCES / slug
+    state_dir = MESSAGES / slug
+    source_dir.mkdir(parents=True, exist_ok=True)
+    state_dir.mkdir(parents=True, exist_ok=True)
+    return source_dir, state_dir
 
 
 def ingest_youtube(url: str, slug: str | None) -> tuple[Path, dict]:
@@ -47,9 +64,8 @@ def ingest_youtube(url: str, slug: str | None) -> tuple[Path, dict]:
     title = meta.get("title", "video")
     duration = meta.get("duration", 0)
     slug = slug or slugify(title)
-    msg_dir = MESSAGES / slug
-    msg_dir.mkdir(parents=True, exist_ok=True)
-    out = msg_dir / "source.mp4"
+    source_dir, state_dir = _slug_dirs(slug)
+    out = source_dir / "source.mp4"
     if out.exists():
         print(f"[skip] {out} already exists", file=sys.stderr)
     else:
@@ -74,15 +90,14 @@ def ingest_youtube(url: str, slug: str | None) -> tuple[Path, dict]:
         "duration_s": duration,
         "slug": slug,
     }
-    (msg_dir / "meta.json").write_text(json.dumps(meta_out, indent=2, ensure_ascii=False))
+    (state_dir / "meta.json").write_text(json.dumps(meta_out, indent=2, ensure_ascii=False))
     return out, meta_out
 
 
 def ingest_local(path: Path, slug: str | None) -> tuple[Path, dict]:
     slug = slug or slugify(path.stem)
-    msg_dir = MESSAGES / slug
-    msg_dir.mkdir(parents=True, exist_ok=True)
-    out = msg_dir / "source.mp4"
+    source_dir, state_dir = _slug_dirs(slug)
+    out = source_dir / "source.mp4"
     if out.exists():
         print(f"[skip] {out} already exists", file=sys.stderr)
     else:
@@ -114,7 +129,7 @@ def ingest_local(path: Path, slug: str | None) -> tuple[Path, dict]:
         "duration_s": duration,
         "slug": slug,
     }
-    (msg_dir / "meta.json").write_text(json.dumps(meta_out, indent=2, ensure_ascii=False))
+    (state_dir / "meta.json").write_text(json.dumps(meta_out, indent=2, ensure_ascii=False))
     return out, meta_out
 
 
@@ -138,7 +153,8 @@ def main() -> None:
                 "slug": meta["slug"],
                 "source_path": str(out),
                 "duration_s": meta["duration_s"],
-                "message_dir": str(out.parent),
+                "source_dir": str(out.parent),
+                "state_dir": str(MESSAGES / meta["slug"]),
             },
             indent=2,
             ensure_ascii=False,

@@ -42,7 +42,9 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import SCHEMA_VERSION, fail, resolve_ffmpeg
+from _common import SCHEMA_VERSION, fail, resolve_ffmpeg, resolve_sources_dir
+
+SOURCES = resolve_sources_dir()
 
 SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
 MESSAGES = SKILL_ROOT / "memory/messages"
@@ -402,7 +404,7 @@ def main() -> None:
     args = ap.parse_args()
 
     msg_dir = MESSAGES / args.slug
-    src = msg_dir / "source.mp4"
+    src = SOURCES / args.slug / "source.mp4"
     out = msg_dir / "transcript.json"
     if not src.exists():
         fail(

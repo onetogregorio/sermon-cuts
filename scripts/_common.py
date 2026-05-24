@@ -155,6 +155,74 @@ def pick_video_encoder(config: dict) -> list[str]:
     ]
 
 
+# ─── user-visible data paths (sources / renders) ──────────────────────────
+
+
+_SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
+
+
+def repo_root() -> Path:
+    """The real filesystem path of the cloned repo, even when the skill is
+    installed via symlinks under ``~/.claude/skills/sermon-cuts/``.
+
+    Resolution order:
+      1. ``SERMON_CUTS_REPO`` env var if set.
+      2. Resolve any symlink on ``~/.claude/skills/sermon-cuts/scripts``
+         (this dir is always symlinked at install time) → parent.
+      3. Fall back to the skill root (if the install didn't symlink and
+         everything lives under the skill dir, paths still work).
+    """
+    env = os.environ.get("SERMON_CUTS_REPO", "").strip()
+    if env:
+        return Path(env)
+    scripts_dir = _SKILL_ROOT / "scripts"
+    if scripts_dir.is_symlink() or scripts_dir.exists():
+        try:
+            return scripts_dir.resolve().parent
+        except OSError:
+            pass
+    return _SKILL_ROOT
+
+
+def resolve_sources_dir() -> Path:
+    """Where source .mp4 files live, organized by slug.
+
+    Default: ``<repo>/sources/`` — visible in Finder/Files, gitignored
+    contents. Each message gets its own subfolder:
+    ``sources/<slug>/source.mp4`` plus any extras you drop alongside it.
+
+    Override with ``SERMON_CUTS_SOURCES_DIR`` env var (absolute path).
+    """
+    env = os.environ.get("SERMON_CUTS_SOURCES_DIR", "").strip()
+    return Path(env) if env else (repo_root() / "sources")
+
+
+def resolve_renders_dir() -> Path:
+    """Where final rendered cuts land, organized by slug.
+
+    Default: ``<repo>/renders/<slug>/NN-slug.mp4`` — visible top-level,
+    gitignored contents.
+
+    Override with ``SERMON_CUTS_RENDERS_DIR``.
+    """
+    env = os.environ.get("SERMON_CUTS_RENDERS_DIR", "").strip()
+    return Path(env) if env else (repo_root() / "renders")
+
+
+def resolve_messages_dir() -> Path:
+    """Where per-message state (transcript.json, vad.json, srts/, meta.json,
+    cuts_proposed.json, corrections.txt) lives.
+
+    Default: ``<skill>/memory/messages/<slug>/`` — kept under the hidden
+    skill folder because users don't typically navigate here; it's
+    pipeline state, not user-facing output.
+
+    Override with ``SERMON_CUTS_MESSAGES_DIR``.
+    """
+    env = os.environ.get("SERMON_CUTS_MESSAGES_DIR", "").strip()
+    return Path(env) if env else (_SKILL_ROOT / "memory/messages")
+
+
 # ─── subtitle style preset selection ──────────────────────────────────────
 
 

@@ -38,7 +38,9 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import fail, resolve_ffmpeg
+from _common import fail, resolve_ffmpeg, resolve_renders_dir
+
+RENDERS = resolve_renders_dir()
 
 SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
 MESSAGES = SKILL_ROOT / "memory/messages"
@@ -128,7 +130,7 @@ def main() -> None:
     cut = cuts[args.cut_index - 1]
     n = cut.get("n", args.cut_index)
     slug = cut["slug"]
-    src = msg_dir / "renders" / f"{n:02d}-{slug}.mp4"
+    src = RENDERS / args.slug / f"{n:02d}-{slug}.mp4"
     if not src.exists():
         fail(
             f"render não encontrado: {src}",

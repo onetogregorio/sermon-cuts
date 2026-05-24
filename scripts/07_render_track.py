@@ -34,10 +34,20 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import fail, load_style_preset, pick_video_encoder, resolve_ffmpeg
+from _common import (
+    fail,
+    load_style_preset,
+    pick_video_encoder,
+    resolve_ffmpeg,
+    resolve_messages_dir,
+    resolve_renders_dir,
+    resolve_sources_dir,
+)
 
 SKILL_ROOT = Path.home() / ".claude/skills/sermon-cuts"
-MESSAGES = SKILL_ROOT / "memory/messages"
+MESSAGES = resolve_messages_dir()
+SOURCES = resolve_sources_dir()
+RENDERS = resolve_renders_dir()
 CFG = yaml.safe_load((SKILL_ROOT / "config/render_defaults.yaml").read_text())
 FFMPEG = resolve_ffmpeg(CFG.get("ffmpeg_bin"))
 OUT_W = CFG["output"]["width"]
@@ -420,7 +430,7 @@ def main() -> None:
     args = ap.parse_args()
 
     msg_dir = MESSAGES / args.slug
-    src = msg_dir / "source.mp4"
+    src = SOURCES / args.slug / "source.mp4"
     cuts = json.loads((msg_dir / "cuts_proposed.json").read_text())
     cut = cuts[args.cut_index - 1]
     n = cut.get("n", args.cut_index)
@@ -428,8 +438,8 @@ def main() -> None:
     seg_start = float(cut["start"])
     seg_end = float(cut["end"])
 
-    renders = msg_dir / "renders"
-    renders.mkdir(exist_ok=True)
+    renders = RENDERS / args.slug
+    renders.mkdir(parents=True, exist_ok=True)
     final = renders / f"{n:02d}-{slug}.mp4"
 
     srt: Path | None = None
