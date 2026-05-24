@@ -10,9 +10,11 @@ sources/
 *.m4a
 *.flac
 
-# Allow sample(s) in examples/
+# Allow sample(s) in examples/ and the demo asset under site/
 !examples/**/*.mp4
 !examples/**/*.gif
+!site/**/*.mp4
+!site/**/*.gif
 
 # Intermediates / generated
 edit/                       # legacy folder, will be removed
