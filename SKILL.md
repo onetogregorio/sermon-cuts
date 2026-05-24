@@ -123,22 +123,11 @@ Se ele rejeitar/pedir mudança em um cut:
 ~/.claude/skills/sermon-cuts/scripts/pipeline.sh --reburn-srt 2 --slug vinde_a_mim
 ```
 
-## Brand style (referência local — também em ~/.claude/projects/.../memory/video_brand_style.md)
+## Brand style
 
-```
-Palette:
-  gold-warm  #fbc531  — texto da legenda
-  pure-black #000000  — outline
-  navy-deep  #192a56  — accent só (animações), nunca outline
+Paleta, tipografia, regras de legenda, format default e organização de arquivos vivem em **[docs/STYLE.md](docs/STYLE.md)** — leia antes de propor mudanças visuais. TL;DR: gold `#fbc531` + outline preto, Outfit Black, vertical 1080×1920, sentence case.
 
-Font: Outfit (Black, FontName=Outfit + Bold=1)
-
-force_style:
-  FontName=Outfit,FontSize=16,Bold=1,
-  PrimaryColour=&H0031C5FB,OutlineColour=&H00000000,BackColour=&H00000000,
-  BorderStyle=1,Outline=0.8,Shadow=0,
-  Alignment=2,MarginV=50
-```
+Overrides puramente locais (path de fonte custom, paleta de outra marca) ficam no `CLAUDE.md` do projeto que consome a skill, não aqui.
 
 ---
 

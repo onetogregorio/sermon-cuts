@@ -45,6 +45,9 @@ __pycache__/
 .idea/
 *.swp
 
+# Per-project Claude instructions (pessoal, não commitar)
+CLAUDE.md
+
 # Secrets
 .env
 .env.local

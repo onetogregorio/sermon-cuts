@@ -27,7 +27,10 @@ subtitle:
   min_words: 3
   max_words: 4
   max_chars: 20
-  font_path: /Users/netogregorio/Library/Fonts/Outfit-Black.ttf
+  # libass resolve "Outfit" pelo sistema. Sobrescreva com caminho absoluto
+  # (ex: /Users/<user>/Library/Fonts/Outfit-Black.ttf) se Outfit não estiver
+  # instalada globalmente ou se quiser forçar um arquivo específico.
+  font_path: null
 
 cut_validation:
   min_pause_after_last_token_s: 0.5
@@ -42,4 +45,7 @@ cut_validation:
     - em
   required_terminal_punct: ".!?"       # cue final ideal termina em uma dessas
 
-ffmpeg_bin: /opt/homebrew/opt/ffmpeg-full/bin/ffmpeg
+# Caminho do binário ffmpeg. null = usar o `ffmpeg` do PATH.
+# Override pra um build com libass habilitada (ex: /opt/homebrew/opt/ffmpeg-full/bin/ffmpeg)
+# se o ffmpeg padrão do sistema não suportar burned subtitles.
+ffmpeg_bin: null

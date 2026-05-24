@@ -123,22 +123,11 @@ Si él rechaza/pide cambio en un corte:
 ~/.claude/skills/sermon-cuts/scripts/pipeline.sh --reburn-srt 2 --slug vinde_a_mim
 ```
 
-## Brand style (referencia local — también en ~/.claude/projects/.../memory/video_brand_style.md)
+## Brand style
 
-```
-Palette:
-  gold-warm  #fbc531  — texto del subtítulo
-  pure-black #000000  — outline
-  navy-deep  #192a56  — accent solo (animaciones), nunca outline
+Paleta, tipografía, reglas de subtítulo, format default y organización de archivos viven en **[docs/STYLE.es.md](docs/STYLE.es.md)** — léelo antes de proponer cualquier cambio visual. TL;DR: gold `#fbc531` + outline negro, Outfit Black, vertical 1080×1920, sentence case.
 
-Font: Outfit (Black, FontName=Outfit + Bold=1)
-
-force_style:
-  FontName=Outfit,FontSize=16,Bold=1,
-  PrimaryColour=&H0031C5FB,OutlineColour=&H00000000,BackColour=&H00000000,
-  BorderStyle=1,Outline=0.8,Shadow=0,
-  Alignment=2,MarginV=50
-```
+Overrides puramente locales (ruta de fuente custom, paleta de otra marca) van en el `CLAUDE.md` del proyecto consumidor, no aquí.
 
 ---
 
