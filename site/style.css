@@ -532,20 +532,20 @@ section h2 {
 }
 
 .sponsor-logo-img {
-  width: 96px;
-  height: 96px;
+  width: 100%;
+  max-width: 240px;
+  height: auto;
   display: block;
-  border-radius: 18px;
+  border-radius: 14px;
   background: var(--paper);
-  padding: 6px;
+  padding: 18px 22px;
   box-shadow: 0 8px 22px -8px rgba(0, 0, 0, 0.5);
 }
 
-.sponsor-name {
-  font-weight: 900;
-  font-size: 1.35rem;
-  letter-spacing: -0.015em;
-  color: var(--paper);
+/* When the sponsor card uses the wide brand mark, the logo already
+   contains the name — hide the duplicate text label. */
+.sponsor-card .sponsor-logo-img + .sponsor-name {
+  display: none;
 }
 
 .sponsor-logo {
