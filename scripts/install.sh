@@ -15,6 +15,15 @@
 
 set -euo pipefail
 
+# Detect non-interactive invocation (`curl install.sh | bash`, CI, etc.).
+# When TTY isn't available we can't prompt — the helpers below use this
+# flag to silently fall back to defaults instead of letting `set -e`
+# abort the script on the first read EOF.
+NON_INTERACTIVE=0
+if [ ! -t 0 ]; then
+  NON_INTERACTIVE=1
+fi
+
 REPO_URL="https://github.com/onetogregorio/sermon-cuts.git"
 SERMON_CUTS_DIR="${SERMON_CUTS_DIR:-$HOME/code/sermon-cuts}"
 SKILL_DIR="$HOME/.claude/skills/sermon-cuts"
@@ -34,9 +43,27 @@ warn(){ printf "  ${YEL}!${RST} %s\n" "$1"; }
 die() { printf "  ${RED}✗${RST} %s\n" "$1" >&2; exit 1; }
 ask() {
   local q="$1" default="${2:-n}" ans
+  # When stdin isn't a TTY (script is piped: `curl ... | bash`), we can't
+  # prompt the user — silently use the default so set -e doesn't kill us.
+  if [ ! -t 0 ]; then
+    [[ "$default" =~ ^[yY] ]]
+    return $?
+  fi
   read -r -p "  ❯ $q [y/N] " ans || ans=""
   ans="${ans:-$default}"
   [[ "$ans" =~ ^[yY] ]]
+}
+
+# Prompt for a string with a fallback default. Safe under `curl | bash`:
+# returns the default without prompting when stdin isn't a TTY.
+prompt() {
+  local q="$1" default="${2:-}" var
+  if [ ! -t 0 ]; then
+    printf '%s' "$default"
+    return 0
+  fi
+  read -r -p "  ❯ $q" var || var=""
+  printf '%s' "${var:-$default}"
 }
 
 # ─── detect OS ────────────────────────────────────────────────────────────
@@ -152,7 +179,7 @@ elif [[ -n "${GROQ_API_KEY:-}" ]]; then
 else
   note "abra https://console.groq.com/keys, crie uma chave (free tier funciona)"
   if ask "Adicionar GROQ_API_KEY no $ENV_FILE agora?"; then
-    read -r -p "  ❯ cole a chave (gsk_...): " key
+    key="$(prompt "cole a chave (gsk_...): ")"
     if [[ "$key" =~ ^gsk_ ]]; then
       echo "GROQ_API_KEY=$key" >> "$ENV_FILE"
       ok "salvo em $ENV_FILE"
@@ -170,7 +197,7 @@ note "Default é Arial Black (sistema, sem download). Outfit Black baixa do Goog
 echo "  1) arial-black     — Arial Black, universal (default)"
 echo "  2) helvetica-bold  — Helvetica Bold, mais limpo (macOS-native)"
 echo "  3) outfit-black    — Outfit Black, fonte display warm (requer download)"
-read -r -p "  ❯ escolha [1-3, default 1]: " font_choice
+font_choice="$(prompt "escolha [1-3, default 1]: " "1")"
 case "${font_choice:-1}" in
   1) PRESET="arial-black"; DOWNLOAD_OUTFIT=0 ;;
   2) PRESET="helvetica-bold"; DOWNLOAD_OUTFIT=0 ;;
