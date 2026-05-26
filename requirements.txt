@@ -8,6 +8,7 @@ pyloudnorm>=0.1.1
 silero-vad>=5.0.0
 soundfile>=0.12.0
 pyyaml>=6.0
+tqdm>=4.65.0
 
 # Optional: local transcription (no API key, ~1.5GB model download on first use).
 # Skip if you only ever transcribe via Groq or YouTube auto-captions.

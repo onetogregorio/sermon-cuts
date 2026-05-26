@@ -55,6 +55,10 @@ OUT_H = CFG["output"]["height"]
 OUT_FPS = CFG["output"]["fps"]
 VID = CFG["video"]
 TRK = CFG["tracking"]
+# FORCE_STYLE is resolved per-invocation in main() once we know the slug
+# (so per-sermon style.yaml can apply) and the --preset CLI override.
+# This module-level binding holds the safe global default for code paths
+# that import the module without going through main().
 FORCE_STYLE = load_style_preset(CFG.get("subtitle", {}))
 
 
@@ -403,6 +407,20 @@ def render_cut_singlepass(
 
     print(f"  pass 2: rendering {total_frames} frames (single-pass)...", file=sys.stderr)
     cap.set(cv2.CAP_PROP_POS_MSEC, seg_start * 1000)
+    # tqdm auto-degrades on non-TTY (CI / piped output): the bar still
+    # advances but as periodic newline-terminated lines instead of an
+    # in-place repaint. So the same loop is readable interactively AND
+    # in a log file without conditional branches.
+    from tqdm.auto import tqdm as _tqdm
+
+    pbar = _tqdm(
+        total=total_frames,
+        unit="frame",
+        desc="  pass 2",
+        file=sys.stderr,
+        leave=False,
+        miniters=max(1, total_frames // 100),  # update at ~1% granularity
+    )
     for fi in range(total_frames):
         ok, frame = cap.read()
         if not ok:
@@ -416,7 +434,9 @@ def render_cut_singlepass(
         crop = scaled[:, crop_x : crop_x + OUT_W]
         ff.stdin.write(crop.tobytes())
         if fi % 90 == 0:
-            print(f"    frame {fi}/{total_frames} (t={t_abs:.1f}s, x={crop_x})", file=sys.stderr)
+            pbar.set_postfix_str(f"t={t_abs:.1f}s x={crop_x}", refresh=False)
+        pbar.update(1)
+    pbar.close()
     ff.stdin.close()
     rc = ff.wait()
     cap.release()
@@ -432,6 +452,15 @@ def main() -> None:
     ap.add_argument("slug")
     ap.add_argument("cut_index", type=int)
     ap.add_argument("--no-subs", action="store_true", help="render without burning subtitles")
+    ap.add_argument(
+        "--preset",
+        default=None,
+        help=(
+            "style preset name (e.g. arial-black, helvetica-bold, outfit-black). "
+            "Overrides config + per-slug style.yaml for this render only — "
+            "useful when cutting for multiple brands from one install."
+        ),
+    )
     args = ap.parse_args()
 
     msg_dir = MESSAGES / args.slug
@@ -442,6 +471,15 @@ def main() -> None:
     slug = cut["slug"]
     seg_start = float(cut["start"])
     seg_end = float(cut["end"])
+
+    # Re-resolve FORCE_STYLE with the slug-dir + --preset override chain.
+    # If neither is given, this matches the module-level global from above.
+    global FORCE_STYLE
+    FORCE_STYLE = load_style_preset(
+        CFG.get("subtitle", {}),
+        preset_override=args.preset,
+        slug_dir=msg_dir,
+    )
 
     renders = RENDERS / args.slug
     renders.mkdir(parents=True, exist_ok=True)

@@ -295,46 +295,87 @@ def resolve_messages_dir() -> Path:
 # ─── subtitle style preset selection ──────────────────────────────────────
 
 
-def load_style_preset(subtitle_cfg: dict | None = None) -> str:
+def load_style_preset(
+    subtitle_cfg: dict | None = None,
+    *,
+    preset_override: str | None = None,
+    slug_dir: Path | None = None,
+) -> str:
     """Resolve the libass ``force_style`` string for the burn-in pass.
 
+    The override chain lets you change the look without touching globals —
+    useful when one user cuts sermons for several brands/channels from the
+    same install. Most-specific override wins.
+
     Lookup order (first match wins):
-      1. ``SUBTITLE_PRESET`` env var — quick per-render override without
-         touching any file.
-      2. ``config/force_style.txt`` if present — advanced override that
-         lets a power user pin a fully hand-tuned style.
-      3. ``config/style_presets/<preset>.txt`` where ``<preset>`` comes
-         from ``subtitle.preset`` in render_defaults.yaml (default
-         ``arial-black``).
-      4. ``config/style_presets/arial-black.txt`` as universal fallback.
+
+      1. ``preset_override`` — explicit name passed by the caller, usually
+         from a ``--preset NAME`` CLI flag on 06_build_srt/07_render_track.
+         Highest priority; bypasses everything else.
+      2. ``<slug_dir>/style.yaml`` — per-sermon override file. May set
+         either ``preset:`` (one of the named presets) or the entire
+         ``force_style:`` string for hand-tuned looks. Survives reruns
+         of the pipeline against the same slug.
+      3. ``SUBTITLE_PRESET`` env var — shell-session quick override.
+      4. ``config/force_style.txt`` if present — advanced legacy hand-tune.
+      5. ``config/style_presets/<preset>.txt`` from
+         ``subtitle.preset`` in render_defaults.yaml (default ``arial-black``).
+      6. ``config/style_presets/arial-black.txt`` as universal fallback.
 
     Reads config_dir() under the hood, which itself follows `__file__`
     to the real repo — works in CI without a skill install.
     """
     presets_dir = config_dir() / "style_presets"
 
-    env_preset = os.environ.get("SUBTITLE_PRESET", "").strip()
-    if env_preset:
-        env_path = presets_dir / f"{env_preset}.txt"
-        if env_path.exists():
-            return env_path.read_text().strip()
-        # Fall through silently to lower-priority sources rather than failing —
-        # an unknown preset name shouldn't break a render.
+    def _from_name(name: str) -> str | None:
+        p = presets_dir / f"{name}.txt"
+        return p.read_text().strip() if p.exists() else None
 
+    # 1. CLI override (highest priority)
+    if preset_override:
+        if loaded := _from_name(preset_override):
+            return loaded
+        # Unknown name — fall through, don't break the render.
+
+    # 2. Per-slug style.yaml
+    if slug_dir is not None:
+        slug_style = slug_dir / "style.yaml"
+        if slug_style.exists():
+            try:
+                import yaml as _yaml
+
+                data = _yaml.safe_load(slug_style.read_text()) or {}
+                if "force_style" in data and data["force_style"]:
+                    # Hand-tuned full string — return verbatim.
+                    return str(data["force_style"]).strip()
+                if "preset" in data and (loaded := _from_name(str(data["preset"]))):
+                    return loaded
+            except Exception:
+                # Bad YAML shouldn't kill a render — fall through.
+                pass
+
+    # 3. Env var
+    env_preset = os.environ.get("SUBTITLE_PRESET", "").strip()
+    if env_preset and (loaded := _from_name(env_preset)):
+        return loaded
+
+    # 4. Legacy hand-tuned full string
     legacy = config_dir() / "force_style.txt"
     if legacy.exists() and legacy.stat().st_size > 0:
         return legacy.read_text().strip()
 
+    # 5. config preset
     preset = (subtitle_cfg or {}).get("preset") or "arial-black"
-    preset_path = presets_dir / f"{preset}.txt"
-    if not preset_path.exists():
-        fallback = presets_dir / "arial-black.txt"
-        if fallback.exists():
-            return fallback.read_text().strip()
-        # Last-ditch hardcoded default so a misconfigured install still renders.
-        return (
-            "FontName=Arial Black,FontSize=16,Bold=1,"
-            "PrimaryColour=&H0031C5FB,OutlineColour=&H00000000,BackColour=&H00000000,"
-            "BorderStyle=1,Outline=0.8,Shadow=0,Alignment=2,MarginV=50"
-        )
-    return preset_path.read_text().strip()
+    if loaded := _from_name(preset):
+        return loaded
+
+    # 6. Universal fallback
+    if loaded := _from_name("arial-black"):
+        return loaded
+
+    # Last-ditch hardcoded default so a misconfigured install still renders.
+    return (
+        "FontName=Arial Black,FontSize=16,Bold=1,"
+        "PrimaryColour=&H0031C5FB,OutlineColour=&H00000000,BackColour=&H00000000,"
+        "BorderStyle=1,Outline=0.8,Shadow=0,Alignment=2,MarginV=50"
+    )
