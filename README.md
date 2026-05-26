@@ -154,10 +154,12 @@ If you'd rather run it yourself:
 Final cuts land in:
 
 ```
-memory/messages/<slug>/renders/01-cut_slug.mp4
-memory/messages/<slug>/renders/02-cut_slug.mp4
-...
+~/Movies/SermonCuts/renders/<slug>/01-cut_slug.mp4   # macOS
+~/.local/share/sermon-cuts/renders/<slug>/...         # Linux
+~/SermonCuts/renders/<slug>/...                       # other
 ```
+
+(Override with `SERMON_CUTS_DATA_DIR=/your/path` to put everything elsewhere.)
 
 Vertical 1080×1920, branded subtitles burned in, audio at -14 LUFS — ready to
 upload to Reels, Shorts, or TikTok. See [`examples/sample_cuts/`](examples/sample_cuts/)
@@ -205,14 +207,26 @@ pip install -r requirements.txt
 
 ## Make it look like yours
 
-Edit two files and the whole pipeline adopts your brand:
+Three ways to brand subtitles, from quickest to most thorough:
 
-- `config/force_style.txt` — subtitle font, color, position
-- `config/render_defaults.yaml` — resolution, frame rate, audio target
+```bash
+# 1. Per render — CLI override (try a different font without editing anything):
+./scripts/07_render_track.py my_sermon 1 --preset helvetica-bold
 
-Default style is built for the gold-on-black look used in the
-[netogregorio.com](https://netogregorio.com) content — but it's all yours
-to change.
+# 2. Per sermon — drop a style.yaml in the sermon's working dir:
+echo "preset: outfit-black" > memory/messages/my_sermon/style.yaml
+# Or hand-tune the full ASS string:
+echo "force_style: 'FontName=Custom,FontSize=18,Outline=1.2,Alignment=2,MarginV=80'" \
+  >> memory/messages/my_sermon/style.yaml
+
+# 3. Global default — change for every render going forward:
+# edit config/render_defaults.yaml -> subtitle.preset
+```
+
+Built-in presets: `arial-black` (default, ships everywhere), `helvetica-bold`
+(macOS-native, lighter), `outfit-black` (requires installing the Outfit font).
+Add your own in `config/style_presets/<your-name>.txt`. Full palette + brand
+guide in [STYLE.md](docs/STYLE.md).
 
 ---
 

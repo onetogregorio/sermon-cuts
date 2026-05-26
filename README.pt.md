@@ -154,10 +154,12 @@ Se preferir rodar na mão:
 Os cortes finais aparecem em:
 
 ```
-memory/messages/<slug>/renders/01-cut_slug.mp4
-memory/messages/<slug>/renders/02-cut_slug.mp4
-...
+~/Movies/SermonCuts/renders/<slug>/01-cut_slug.mp4   # macOS
+~/.local/share/sermon-cuts/renders/<slug>/...         # Linux
+~/SermonCuts/renders/<slug>/...                       # outros
 ```
+
+(Sobrescreva com `SERMON_CUTS_DATA_DIR=/seu/caminho` pra colocar tudo em outro lugar.)
 
 Vertical 1080×1920, legenda brand-style queimada, áudio a -14 LUFS — pronto pra
 subir em Reels, Shorts ou TikTok. Veja [`examples/sample_cuts/`](examples/sample_cuts/)
@@ -205,13 +207,27 @@ pip install -r requirements.txt
 
 ## Faz parecer com a sua cara
 
-Edita dois arquivos e o pipeline todo adota sua marca:
+Três jeitos de personalizar a legenda, do mais rápido pro mais completo:
 
-- `config/force_style.txt` — fonte, cor e posição da legenda
-- `config/render_defaults.yaml` — resolução, frame rate, alvo de áudio
+```bash
+# 1. Por render — flag CLI (testa uma fonte sem editar nada):
+./scripts/07_render_track.py meu_sermao 1 --preset helvetica-bold
 
-O estilo padrão é o look dourado-no-preto usado no conteúdo do
-[netogregorio.com](https://netogregorio.com) — mas é todo seu pra mudar.
+# 2. Por sermão — joga um style.yaml na pasta do sermão:
+echo "preset: outfit-black" > memory/messages/meu_sermao/style.yaml
+# Ou personaliza a string ASS inteira:
+echo "force_style: 'FontName=Custom,FontSize=18,Outline=1.2,Alignment=2,MarginV=80'" \
+  >> memory/messages/meu_sermao/style.yaml
+
+# 3. Default global — muda pra todo render daqui pra frente:
+# edita config/render_defaults.yaml -> subtitle.preset
+```
+
+Presets built-in: `arial-black` (padrão, vem em qualquer máquina),
+`helvetica-bold` (macOS-native, mais leve), `outfit-black` (precisa
+instalar a fonte Outfit). Cria os seus em
+`config/style_presets/<seu-nome>.txt`. Paleta e guia de marca completos em
+[STYLE.md](docs/STYLE.md).
 
 ---
 

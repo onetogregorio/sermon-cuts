@@ -157,10 +157,12 @@ Si prefieres ejecutarlo a mano:
 Los cortes finales aparecen en:
 
 ```
-memory/messages/<slug>/renders/01-cut_slug.mp4
-memory/messages/<slug>/renders/02-cut_slug.mp4
-...
+~/Movies/SermonCuts/renders/<slug>/01-cut_slug.mp4   # macOS
+~/.local/share/sermon-cuts/renders/<slug>/...         # Linux
+~/SermonCuts/renders/<slug>/...                       # otros
 ```
+
+(Sobrescribe con `SERMON_CUTS_DATA_DIR=/tu/ruta` para poner todo en otro lugar.)
 
 Vertical 1080×1920, subtítulo brand-style quemado, audio a -14 LUFS — listos
 para subir a Reels, Shorts o TikTok. Vea [`examples/sample_cuts/`](examples/sample_cuts/)
@@ -208,13 +210,27 @@ pip install -r requirements.txt
 
 ## Hazlo con tu cara
 
-Edita dos archivos y todo el pipeline adopta tu marca:
+Tres formas de personalizar los subtítulos, del más rápido al más completo:
 
-- `config/force_style.txt` — fuente, color y posición del subtítulo
-- `config/render_defaults.yaml` — resolución, frame rate, target de audio
+```bash
+# 1. Por render — flag CLI (prueba una fuente sin editar nada):
+./scripts/07_render_track.py mi_sermon 1 --preset helvetica-bold
 
-El estilo predeterminado es el look dorado-en-negro usado en el contenido de
-[netogregorio.com](https://netogregorio.com) — pero es todo tuyo para cambiar.
+# 2. Por sermón — pon un style.yaml en la carpeta del sermón:
+echo "preset: outfit-black" > memory/messages/mi_sermon/style.yaml
+# O personaliza la string ASS completa:
+echo "force_style: 'FontName=Custom,FontSize=18,Outline=1.2,Alignment=2,MarginV=80'" \
+  >> memory/messages/mi_sermon/style.yaml
+
+# 3. Default global — cambia para todo render de aquí en adelante:
+# edita config/render_defaults.yaml -> subtitle.preset
+```
+
+Presets built-in: `arial-black` (predeterminado, viene en cualquier máquina),
+`helvetica-bold` (macOS-native, más ligero), `outfit-black` (requiere instalar
+la fuente Outfit). Crea los tuyos en
+`config/style_presets/<tu-nombre>.txt`. Paleta y guía de marca completa en
+[STYLE.es.md](docs/STYLE.es.md).
 
 ---
 
