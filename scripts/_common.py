@@ -190,29 +190,87 @@ def prompts_dir() -> Path:
     return repo_root() / "prompts"
 
 
+def user_data_dir() -> Path:
+    """Default user-data root, OS-aware. Where renders + sources live by
+    default when no env override is set.
+
+    Rationale: the skill is meant to be installed once and used against
+    many sermons over many years. Putting user data (raw videos, rendered
+    cuts) inside the cloned code repo couples data lifetime to the repo
+    checkout — a ``git clean -fd`` or a re-clone would nuke months of
+    sermons. So we default to a stable user-visible location:
+
+      - macOS  → ``~/Movies/SermonCuts/``        (Movies.app sees it)
+      - Linux  → ``$XDG_DATA_HOME/sermon-cuts``  or ``~/.local/share/sermon-cuts``
+      - Other  → ``~/SermonCuts/``               (Windows, BSDs)
+
+    Override with ``SERMON_CUTS_DATA_DIR`` to put everything elsewhere.
+    """
+    env = os.environ.get("SERMON_CUTS_DATA_DIR", "").strip()
+    if env:
+        return Path(env)
+    system = platform.system()
+    if system == "Darwin":
+        return Path.home() / "Movies" / "SermonCuts"
+    if system == "Linux":
+        xdg = os.environ.get("XDG_DATA_HOME", "").strip()
+        if xdg:
+            return Path(xdg) / "sermon-cuts"
+        return Path.home() / ".local" / "share" / "sermon-cuts"
+    return Path.home() / "SermonCuts"
+
+
+def _legacy_repo_dir(name: str) -> Path | None:
+    """Return ``<repo>/<name>`` only if it exists with content — used as a
+    transitional back-compat fallback for users who set up before we moved
+    defaults out of the repo. Empty placeholder dirs (just .gitkeep) don't
+    count. None means "no legacy data, use the new default"."""
+    candidate = repo_root() / name
+    if not candidate.exists():
+        return None
+    real_content = [
+        p for p in candidate.iterdir()
+        if p.name not in {".gitkeep", "README.md", ".DS_Store"}
+    ]
+    return candidate if real_content else None
+
+
 def resolve_sources_dir() -> Path:
     """Where source .mp4 files live, organized by slug.
 
-    Default: ``<repo>/sources/`` — visible in Finder/Files, gitignored
-    contents. Each message gets its own subfolder:
-    ``sources/<slug>/source.mp4`` plus any extras you drop alongside it.
+    Resolution order:
+      1. ``SERMON_CUTS_SOURCES_DIR`` env var (absolute path override).
+      2. Legacy ``<repo>/sources/`` if it already has slug content
+         (back-compat for setups predating the user-data-dir move).
+      3. ``user_data_dir() / "sources"`` — the new agnostic default.
 
-    Override with ``SERMON_CUTS_SOURCES_DIR`` env var (absolute path).
+    Each message gets its own subfolder: ``<dir>/<slug>/source.mp4`` plus
+    any extras you drop alongside it.
     """
     env = os.environ.get("SERMON_CUTS_SOURCES_DIR", "").strip()
-    return Path(env) if env else (repo_root() / "sources")
+    if env:
+        return Path(env)
+    if legacy := _legacy_repo_dir("sources"):
+        return legacy
+    return user_data_dir() / "sources"
 
 
 def resolve_renders_dir() -> Path:
     """Where final rendered cuts land, organized by slug.
 
-    Default: ``<repo>/renders/<slug>/NN-slug.mp4`` — visible top-level,
-    gitignored contents.
+    Resolution order:
+      1. ``SERMON_CUTS_RENDERS_DIR`` env var (absolute path override).
+      2. Legacy ``<repo>/renders/`` if it already has slug content.
+      3. ``user_data_dir() / "renders"`` — the new agnostic default.
 
-    Override with ``SERMON_CUTS_RENDERS_DIR``.
+    Output path: ``<dir>/<slug>/NN-slug.mp4``.
     """
     env = os.environ.get("SERMON_CUTS_RENDERS_DIR", "").strip()
-    return Path(env) if env else (repo_root() / "renders")
+    if env:
+        return Path(env)
+    if legacy := _legacy_repo_dir("renders"):
+        return legacy
+    return user_data_dir() / "renders"
 
 
 def resolve_messages_dir() -> Path:
