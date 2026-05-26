@@ -356,31 +356,61 @@ def _to_scribe_shape(raw_words: list[dict]) -> list[dict]:
 # ─── main ──────────────────────────────────────────────────────────────────
 
 
+_LOCAL_WHISPER_MAX_DURATION_S = 20 * 60
+"""``local`` provider is acceptable for sermons under this duration.
+Longer videos shift the default toward cloud/VTT providers because local
+inference scales linearly with audio length and CPU-bound runs of
+faster-whisper on a 60-minute sermon can take 30-90 minutes on a laptop
+without a GPU — slower than the cloud round-trip even at free-tier
+rate limits. Override with ``--provider=local`` to force it anyway."""
+
+
 def _auto_pick_provider(meta: dict) -> str:
     """Provider selection when --provider isn't passed.
 
-    Order of preference, in keeping with "best available quality without
-    asking the user to set anything up":
+    Order of preference balances *best available quality* against *time to
+    first transcript* — a 60-minute sermon should not silently kick off a
+    half-hour local Whisper job when YouTube auto-captions would land in
+    3 seconds. Logic:
 
-      1. groq    — if GROQ_API_KEY is exported or in ~/.env (best accuracy)
-      2. local   — if faster-whisper imports successfully (offline, premium)
-      3. youtube — if the source was ingested from a YouTube URL (no key,
-                   auto-captions, lowest accuracy but instant)
-      4. error   — local source with no Groq key and no faster-whisper
+      1. ``groq``    — if GROQ_API_KEY is exported or in ~/.env (best
+                       accuracy, fast, cloud — user opted in explicitly).
+      2. ``youtube`` — if source is a YouTube URL AND the video is longer
+                       than _LOCAL_WHISPER_MAX_DURATION_S. Trades accuracy
+                       for speed on long content; the scrub step + manual
+                       review catch the dropped-word errors VTT makes.
+      3. ``local``   — if faster-whisper imports successfully. Offline,
+                       premium quality, but slow for long inputs on CPU.
+      4. ``youtube`` — short video with no Groq key, faster-whisper not
+                       installed; fall back to auto-captions.
+      5. error       — local source < threshold, no Groq, no faster-whisper.
 
-    Doctor reports which path is active.
+    Doctor reports which path is active. Override with --provider= at any
+    time to bypass this heuristic.
     """
     load_env()  # populate from ~/.env so the GROQ key check is honest
     if os.environ.get("GROQ_API_KEY"):
         return "groq"
+
+    duration_s = float(meta.get("duration_s", 0) or 0)
+    is_youtube = meta.get("source_type") == "youtube" and meta.get("url")
+    long_video = duration_s > _LOCAL_WHISPER_MAX_DURATION_S
+
+    # Long YouTube videos: prefer instant auto-captions over multi-hour
+    # local Whisper runs. User can opt back into local with --provider=local.
+    if is_youtube and long_video:
+        return "youtube"
+
     try:
         import faster_whisper  # noqa: F401
 
         return "local"
     except ImportError:
         pass
-    if meta.get("source_type") == "youtube" and meta.get("url"):
+
+    if is_youtube:
         return "youtube"
+
     fail(
         "nenhum provider de transcrição disponível",
         hint="opções: (a) `pip install faster-whisper` no venv pra rodar local, "

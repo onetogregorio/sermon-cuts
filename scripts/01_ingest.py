@@ -69,7 +69,10 @@ def ingest_youtube(url: str, slug: str | None) -> tuple[Path, dict]:
     if out.exists():
         print(f"[skip] {out} already exists", file=sys.stderr)
     else:
-        # Download best video+audio merged to mp4, prefer 1080p
+        # Download best video+audio merged to mp4, prefer 1080p.
+        # Route yt-dlp's progress lines to stderr so downstream consumers
+        # parsing our stdout (the final JSON receipt) don't choke on
+        # download chatter mixed into the output stream.
         subprocess.run(
             [
                 "yt-dlp",
@@ -82,6 +85,7 @@ def ingest_youtube(url: str, slug: str | None) -> tuple[Path, dict]:
                 url,
             ],
             check=True,
+            stdout=sys.stderr,
         )
     meta_out = {
         "source_type": "youtube",

@@ -58,14 +58,19 @@ TRK = CFG["tracking"]
 FORCE_STYLE = load_style_preset(CFG.get("subtitle", {}))
 
 
-MP_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.task"
-MP_MODEL_PATH = config_dir() / "blaze_face_short_range.task"
+# MediaPipe model URLs. Note the ``/latest/`` path segment — Google moved
+# the model files under that prefix in mid-2024 and the old ``/1/`` URLs
+# now 404. The face detector also lives as ``.tflite`` (not ``.task``)
+# under the new layout; MediaPipe Tasks API accepts either extension when
+# loading via ``base_options.model_asset_path``.
+MP_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/latest/blaze_face_short_range.tflite"
+MP_MODEL_PATH = config_dir() / "blaze_face_short_range.tflite"
 
 # Pose landmarker — used as a fallback when face detection misses, e.g.,
 # when the preacher looks down to read the Bible or turns away briefly.
 # The "lite" variant is ~10MB and runs at the same 2-fps sampling cadence
 # we use for face detection, so the extra cost is negligible.
-MP_POSE_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task"
+MP_POSE_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task"
 MP_POSE_PATH = config_dir() / "pose_landmarker_lite.task"
 
 

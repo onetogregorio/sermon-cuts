@@ -242,8 +242,34 @@ if [[ "$DOWNLOAD_OUTFIT" -eq 1 ]]; then
   fi
 fi
 
+# ─── MediaPipe models (pre-download so first render doesn't need network) ──
+# Google moves these URLs occasionally (the old /1/ paths 404'd as of
+# mid-2024; current canonical is /latest/). Pre-downloading at install
+# time means a failed runtime fetch can't silently degrade face tracking
+# to Haar cascade on a user's first cut — and they're tiny (~10 MB total).
+say "8. Modelos MediaPipe (face + pose tracking)"
+MP_DIR="$SERMON_CUTS_DIR/config"
+MP_FACE_URL="https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/latest/blaze_face_short_range.tflite"
+MP_POSE_URL="https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task"
+for spec in "blaze_face_short_range.tflite:$MP_FACE_URL" \
+            "pose_landmarker_lite.task:$MP_POSE_URL"; do
+  fname="${spec%%:*}"
+  url="${spec#*:}"
+  dest="$MP_DIR/$fname"
+  if [[ -f "$dest" ]]; then
+    ok "$fname já presente"
+  else
+    if curl -fsSL "$url" -o "$dest"; then
+      ok "$fname baixado"
+    else
+      warn "$fname falhou — face tracking pode cair pro Haar no primeiro render"
+      rm -f "$dest"
+    fi
+  fi
+done
+
 # ─── final doctor ─────────────────────────────────────────────────────────
-say "8. Health check"
+say "9. Health check"
 python3 "$SERMON_CUTS_DIR/scripts/doctor.py" || true
 
 printf "\n${GREEN}${BOLD}Instalação concluída.${RST}\n"
