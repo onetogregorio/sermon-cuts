@@ -242,32 +242,43 @@ Reporta sucesso ou o passo que falhou no final.</pre>
           <article class="card">
             <div class="icon">Aa</div>
             <h3>Legenda brand-style</h3>
-            <p>Outfit Black, dourado no preto, 3-4 palavras por linha, sentence
-              case, posicionada acima da barra UI do Reels/TikTok. Sem caixa alta.</p>
+            <p>3 presets built-in (Arial Black em qualquer máquina, Helvetica Bold
+              pra macOS, Outfit Black pra display de marca). 3-4 palavras por linha,
+              sentence case, posicionada acima da barra UI do Reels/TikTok.</p>
           </article>
           <article class="card">
             <div class="icon">✦</div>
             <h3>IA propõe, você escolhe</h3>
-            <p>Cada corte precisa de hook, desenvolvimento e conclusão. Não
-              pode terminar em <em>"porque…"</em> ou <em>"mas…"</em>. Ranqueados por arco narrativo.</p>
+            <p>Cada corte precisa de hook, desenvolvimento e conclusão, 25-60s.
+              Não pode terminar em <em>"porque…"</em> ou <em>"mas…"</em>. Ranqueados
+              por arco narrativo — você aprova antes de qualquer render começar.</p>
           </article>
           <article class="card">
             <div class="icon">♪</div>
             <h3>Áudio balanceado por loudness</h3>
-            <p>pyloudnorm em dois passes pra -14 LUFS — padrão do Instagram e
-              TikTok. Sua pregação soa certo em toda plataforma.</p>
+            <p>loudnorm EBU R128 do ffmpeg pra -14 LUFS com true-peak limiter
+              em -1.5 dBTP — padrão do Instagram e TikTok, sem clipping.</p>
           </article>
           <article class="card">
             <div class="icon">⌘</div>
             <h3>Um comando, ponta a ponta</h3>
             <p><code>./scripts/pipeline.sh &lt;url&gt;</code> faz ingest,
-              transcrição, detecção de pausas com VAD e render limpo.</p>
+              transcrição, detecção de pausas com VAD, scrub do SRT e render
+              limpo com barra de progresso ao vivo.</p>
           </article>
           <article class="card">
-            <div class="icon">⌥</div>
-            <h3>Seu pra customizar</h3>
-            <p>Edita dois arquivos (<code>force_style.txt</code>, <code>render_defaults.yaml</code>)
-              e o pipeline todo adota a cor e a fonte da sua marca.</p>
+            <div class="icon">⎈</div>
+            <h3>Várias marcas, uma instalação</h3>
+            <p>Joga um <code>style.yaml</code> na pasta de qualquer sermão ou passa
+              <code>--preset NOME</code> pra override pontual. Corta pra vários
+              ministérios ou canais sem mexer no global.</p>
+          </article>
+          <article class="card">
+            <div class="icon">⎋</div>
+            <h3>Seguro pro pastor por padrão</h3>
+            <p>O provider padrão mantém seu áudio local (auto-legenda do YouTube só
+              consulta a URL). Modelos MediaPipe pré-baixados na instalação —
+              primeiro render funciona offline.</p>
           </article>
         </div>
       </div>

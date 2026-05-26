@@ -243,32 +243,43 @@ Report success or the failed step at the end.</pre>
           <article class="card">
             <div class="icon">Aa</div>
             <h3>Brand-style subtitles</h3>
-            <p>Outfit Black, gold on black, 3-4 words per line, sentence case,
-              positioned above the Reels/TikTok UI bar. No shouting caps.</p>
+            <p>3 built-in font presets (Arial Black ships everywhere, Helvetica Bold
+              for macOS, Outfit Black for brand display). 3-4 words per line,
+              sentence case, positioned above the Reels/TikTok UI bar.</p>
           </article>
           <article class="card">
             <div class="icon">✦</div>
             <h3>AI proposes, you pick</h3>
-            <p>Cuts must have a hook, development, and conclusion. Can't end
-              on <em>"porque…"</em> or <em>"but…"</em>. Ranked by narrative arc.</p>
+            <p>Cuts must have a hook, development, and conclusion, 25-60 s.
+              Can't end on <em>"porque…"</em> or <em>"but…"</em>. Ranked by
+              narrative arc — you approve before any render starts.</p>
           </article>
           <article class="card">
             <div class="icon">♪</div>
             <h3>Loudness-balanced audio</h3>
-            <p>pyloudnorm two-pass to -14 LUFS — the Instagram and TikTok
-              standard. Your sermon sounds right on every platform.</p>
+            <p>ffmpeg's EBU R128 loudnorm to -14 LUFS with a true-peak limiter
+              at -1.5 dBTP — the Instagram and TikTok standard, no clipping.</p>
           </article>
           <article class="card">
             <div class="icon">⌘</div>
             <h3>One command end-to-end</h3>
             <p><code>./scripts/pipeline.sh &lt;url&gt;</code> handles ingest,
-              transcription, VAD pause detection, and renders cleanly.</p>
+              transcription, VAD pause detection, SRT scrub, and renders cleanly
+              with a live progress bar.</p>
           </article>
           <article class="card">
-            <div class="icon">⌥</div>
-            <h3>Yours to customize</h3>
-            <p>Edit two files (<code>force_style.txt</code>, <code>render_defaults.yaml</code>)
-              and the whole pipeline takes on your brand colors and font.</p>
+            <div class="icon">⎈</div>
+            <h3>Multi-brand from one install</h3>
+            <p>Drop a <code>style.yaml</code> in any sermon's folder or pass
+              <code>--preset NAME</code> for one-off overrides. Cut for several
+              ministries or channels without touching globals.</p>
+          </article>
+          <article class="card">
+            <div class="icon">⎋</div>
+            <h3>Pastor-safe by default</h3>
+            <p>Default provider keeps your audio local (YouTube auto-captions only
+              query the URL). MediaPipe models pre-downloaded at install time —
+              first render works offline.</p>
           </article>
         </div>
       </div>
